@@ -5,31 +5,40 @@ public record Matrix4(double a, double b, double c, double d,
                       double i, double j, double k, double l,
                       double m, double n, double o, double p) {
 
-//    public double determinant() {
-//        return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h;
-//    }
+    // TODO: All 4d matrix operators
+    
+    public double determinant() {
+        return a * new Matrix3(f, g, h, j, k, l, n, o, p).determinant() -
+               e * new Matrix3(b, c, d, j, k, l, n, o, p).determinant() + 
+               i * new Matrix3(b, c, d, f, g, h, n, o, p).determinant() - 
+               m * new Matrix3(b, c, d, f, g, h, j, k, l).determinant();
+    }
 
     public Matrix4 transpose() {
         return new Matrix4(a, e, i, m, b, f, j, n, c, g, k, o, d, h, l, p);
     }
-
-//    private static final Matrix4 CO_SIGNS = new Matrix4(1, -1, 1, -1, 1, -1, 1, -1, 1);
-//
-//    public Matrix4 inverse() {
-//        Matrix4 other = new Matrix4(new Matrix2(e, f, h, i).determinant(), new Matrix2(d, f, g, i).determinant(), new Matrix2(d, e, g, h).determinant(),
-//                                    new Matrix2(b, c, h, i).determinant(), new Matrix2(a, c, g, i).determinant(), new Matrix2(a, b, g, h).determinant(),
-//                                    new Matrix2(b, c, e, f).determinant(), new Matrix2(a, c, d, f).determinant(), new Matrix2(a, b, d, e).determinant());
-//        Matrix4 cof = other.multiply(CO_SIGNS);
-//        return cof.transpose().multiply(1 / determinant());
-//    }
+    
+    /**
+     * 
+     * @return the inverted matrix or null if it can't be inverted
+     */
+    public Matrix4 inverse() {
+        double det = determinant();
+        if (det == 0) return null;
+        Matrix4 cof = new Matrix4(new Matrix3(f, g, h, j, k, l, n, o, p).determinant(), -new Matrix3(e, g, h, i, k, l, m, o, p).determinant(),  new Matrix3(e, f, h, i, j, l, m, n, p).determinant(), -new Matrix3(e, f, g, i, j, k, m, n, o).determinant(),
+                                 -new Matrix3(b, c, d, j, k, l, n, o, p).determinant(),  new Matrix3(a, c, d, i, k, l, m, o, p).determinant(), -new Matrix3(a, b, d, i, j, l, m, n, p).determinant(),  new Matrix3(a, b, c, i, j, k, m, n, o).determinant(),
+                                  new Matrix3(b, c, d, f, g, h, n, o, p).determinant(), -new Matrix3(a, c, d, e, g, h, m, o, p).determinant(),  new Matrix3(a, b, d, e, f, h, m, n, p).determinant(), -new Matrix3(a, b, c, e, f, g, m, n, o).determinant(),
+                                 -new Matrix3(b, c, d, f, g, h, j, k, l).determinant(),  new Matrix3(a, c, d, e, g, h, i, k, l).determinant(), -new Matrix3(a, b, d, e, f, h, i, j, l).determinant(),  new Matrix3(a, b, c, e, f, g, i, j, k).determinant());
+        return cof.transpose().multiply(1 / det);
+    }
 
 //    public Matrix4 multiply(Matrix4 m) {
 //        return new Matrix4(a * m.a, b * m.b, c * m.c, d * m.d, e * m.e, f * m.f, g * m.g, h * m.h, i * m.i);
 //    }
 //
-//    public Matrix4 multiply(double s) {
-//        return new Matrix4(a * s, b * s, c * s, d * s, e * s, f * s, g * s, h * s, i * s);
-//    }
+    public Matrix4 multiply(double s) {
+        return new Matrix4(a * s, b * s, c * s, d * s, e * s, f * s, g * s, h * s, i * s, j * s, k * s, l * s, m * s, n * s, o * s, p * s);
+    }
 //
 //    public Matrix4 compose(Matrix4 m) {
 //        return new Matrix4(m.a * a + m.d * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
@@ -72,6 +81,12 @@ public record Matrix4(double a, double b, double c, double d,
 //    public static Matrix4 rotate(double a) {
 //        return new Matrix4(Math.cos(a), -Math.sin(a), 0, Math.sin(a), Math.cos(a), 0, 0, 0, 1);
 //    }
+    
+    
+    @Override
+    public String toString() {
+        return "[[" + a + ", " + b + ", " + c + ", " + d + "][" + e + ", " + f + ", " + g + ", " + h + "][" + i + ", " + j + ", " + k + ", " + l + "][" + m + ", " + n + ", " + o + ", " + p + "]]";
+    }
 }
 
 

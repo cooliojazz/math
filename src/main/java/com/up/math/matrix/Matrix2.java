@@ -47,6 +47,11 @@ public record Matrix2(double a, double b,
                           c * m.c, c * m.d, d * m.c, d * m.d);
     }
     
+    @Override
+    public String toString() {
+        return "[[" + a + ", " + b + "][" + c + ", " + d + "]";
+    }
+    
     /**
      * Computes e^this
      * @return the exponentiated matrix
