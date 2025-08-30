@@ -1,4 +1,7 @@
-package com.up.math;
+package com.up.math.matrix;
+
+import com.up.math.Complex;
+import com.up.math.vector.ComplexPoint2;
 
 import java.awt.geom.Point2D;
 import java.util.function.Function;

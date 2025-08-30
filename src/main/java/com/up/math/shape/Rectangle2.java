@@ -1,4 +1,7 @@
-package com.up.math;
+package com.up.math.shape;
+
+import com.up.math.matrix.Matrix3;
+import com.up.math.vector.Point2;
 
 public record Rectangle2(Point2 start, Point2 end) {
 

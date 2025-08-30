@@ -1,4 +1,7 @@
-package com.up.math;
+package com.up.math.matrix;
+
+import com.up.math.vector.Point2;
+import com.up.math.vector.Point3;
 
 import java.awt.geom.Point2D;
 
@@ -37,6 +40,10 @@ public record Matrix3(double a, double b, double c,
         return new Matrix3(m.a * a + m.d * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
                            m.a * d + m.d * e + m.g * f, m.b * d + m.e * e + m.h * f, m.c * d + m.f * e + m.i * f,
                            m.a * g + m.d * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
+    }
+
+    public Point3 apply(Point3 p) {
+        return new Point3(p.x() * a + p.y() * b + p.z() * c, p.x() * d + p.y() * e + p.z() * f, p.x() * g + p.y() * h + p.z() * i);
     }
 
     public Point2 apply(Point2D p) {

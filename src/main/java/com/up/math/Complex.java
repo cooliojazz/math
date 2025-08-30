@@ -1,5 +1,7 @@
 package com.up.math;
 
+import com.up.math.vector.Point2;
+
 public record Complex(double real, double imag) {
     
     public static final Complex ZERO = new Complex(0);

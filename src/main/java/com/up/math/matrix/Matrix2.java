@@ -1,4 +1,6 @@
-package com.up.math;
+package com.up.math.matrix;
+
+import com.up.math.vector.Point2;
 
 import java.awt.geom.Point2D;
 

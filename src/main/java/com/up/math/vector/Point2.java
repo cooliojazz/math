@@ -1,4 +1,7 @@
-package com.up.math;
+package com.up.math.vector;
+
+import com.up.math.Complex;
+import com.up.math.shape.Rectangle2;
 
 import java.awt.geom.Point2D;
 
@@ -55,6 +58,10 @@ public class Point2 extends Point2D.Double {
     public Point2 normalized() {
         double len = length();
         return new Point2(x / len, y / len);
+    }
+    
+    public Point3 homogenous() {
+        return new Point3(x, y, 1);
     }
     
     public Complex asComplex() {

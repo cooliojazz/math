@@ -1,6 +1,6 @@
-package com.up.math;
+package com.up.math.vector;
 
-import java.awt.geom.Point2D;
+import com.up.math.Complex;
 
 public class ComplexPoint2 {
 

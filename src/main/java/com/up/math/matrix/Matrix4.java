@@ -1,6 +1,4 @@
-package com.up.math;
-
-import java.awt.geom.Point2D;
+package com.up.math.matrix;
 
 public record Matrix4(double a, double b, double c, double d,
                       double e, double f, double g, double h,
