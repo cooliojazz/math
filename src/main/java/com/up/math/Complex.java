@@ -93,6 +93,7 @@ public record Complex(double real, double imag) {
     }
     
     public static Complex pow(double d, Complex c) {
+        if (d == 0) return new Complex(0);
         return Complex.fromPolar(1, c.imag * Math.log(d)).multiply(Math.pow(d, c.real));
     }
     
