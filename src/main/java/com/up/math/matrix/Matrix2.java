@@ -46,6 +46,10 @@ public record Matrix2(double a, double b,
                            c * m.a, c * m.b, d * m.a, d * m.b,
                           c * m.c, c * m.d, d * m.c, d * m.d);
     }
+
+    public Matrix3 promote() {
+        return new Matrix3(a, b, 0, c, d, 0, 0, 0, 1);
+    }
     
     @Override
     public String toString() {
@@ -70,6 +74,14 @@ public record Matrix2(double a, double b,
 
     public static Matrix2 scale(double s) {
         return new Matrix2(s, 0, 0, s);
+    }
+    
+    public static Matrix2 scale(Point2 s) {
+        return new Matrix2(s.x, 0, 0, s.y);
+    }
+    
+    public static Matrix2 scale(double xs, double ys) {
+        return new Matrix2(xs, 0, 0, ys);
     }
 
     public static Matrix2 rotate(double a) {

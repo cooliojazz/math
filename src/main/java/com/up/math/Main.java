@@ -1,6 +1,7 @@
 package com.up.math;
 
 import com.up.math.matrix.ComplexMatrix4;
+import com.up.math.matrix.Matrix2;
 import com.up.math.matrix.Matrix3;
 import com.up.math.matrix.Matrix4;
 import com.up.math.shape.Rectangle2;
@@ -42,8 +43,6 @@ public class Main {
         
         private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         
-//        private Rectangle2 bounds = new Rectangle2(-1.5, -1, 1, 1);
-        private Rectangle2 bounds = new Rectangle2(0, 0, 1, 1);
         private Matrix3 screen = Matrix3.identity();
         private Matrix3 view = Matrix3.identity();
         private Complex factor = new Complex(2);
@@ -63,14 +62,17 @@ public class Main {
                     @Override
                     public void mouseDragged(MouseEvent e) {
                         Point2 p = new Point2(e.getPoint());
-                        view = Matrix3.offset(view.linearMap().apply(p.to(last).mul(new Point2(1d / getWidth(), 1d / getHeight())))).compose(view);
-//                        resetCanvas();
-                        reuseCanvas(Matrix3.offset(p.to(last)).inverse());
+                        Point2 ip = screen.inverse().apply(p);
+                        Point2 il = screen.inverse().apply(last);
+                        view = Matrix3.offset(view.linearMap().apply(ip).to(view.linearMap().apply(il))).compose(view);
+                        reuseCanvas(Matrix3.offset(last.to(p)));
                         last = p;
                     }
                 });
             addMouseWheelListener(e -> {
+    //                Matrix3 ds = Matrix3.scale(Math.pow(2, e.getPreciseWheelRotation()));
                     Matrix3 ds = Matrix3.scale(Math.pow(2, e.getPreciseWheelRotation()));
+//                    view = Matrix3.offset(ds.apply(new Point2(view.c(), view.f()))).compose(ds.compose(view.linearMap().promote()));
                     view = ds.compose(view);
                     reuseCanvas(ds.inverse());
                 });
@@ -105,11 +107,9 @@ public class Main {
                     try {Thread.sleep(10);} catch (Exception e) {}
                 }
                 Graphics2D g = buffer.createGraphics();
-                Point2 p = new Point2(Math.random(), Math.random());
-                int esc = fractalCheck(p.mul(view.linearMap().apply(bounds.getDimensions())).sum(view.apply(bounds.getStart())).asComplex(), new Complex(0.25, -0.5), factor);
+                Point2 p = new Point2(Math.random() * 2 - 1, Math.random() * 2 - 1);
+                int esc = fractalCheck(view.apply(p).asComplex(), new Complex(0.25, -0.5), factor);
                 if (esc < maxEscape) {
-//                    g.setColor(new Color(esc * 255 / maxEscape, 0, 0));
-//                    g.setColor(new Color(Math.min(255, (int)(Math.log(esc) * 36)), 0, 0));
                     Color c = grad.get(Math.log(esc) / Math.log(maxEscape));
                     g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 63));
                 } else {
@@ -148,6 +148,8 @@ public class Main {
             Point2 ts = mm.linearMap().apply(new Point2(getWidth(), getHeight()));
             BufferedImage back = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = back.createGraphics();
+            g.setBackground(Color.black);
+            g.clearRect(0, 0, getWidth(), getHeight());
             g.drawImage(buffer, (int)tp.getX(), (int)tp.getY(), (int)ts.getX(), (int)ts.getY(), null);
             buffer = back;
             
@@ -171,7 +173,7 @@ public class Main {
         public void reshape(int x, int y, int width, int height) {
             super.reshape(x, y, width, height);
             int sMax = Math.max(width, height);
-            screen = Matrix3.scale(new Point2(sMax, sMax));
+            screen = Matrix3.scale(new Point2(sMax / 2d, sMax / 2d)).compose(Matrix3.offset(1, 1));
 //            screen = Matrix3.offset(new Point2(-sMax / 2d, -sMax / 2d)).compose(Matrix3.scale(new Point2(sMax, sMax)));
             buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             resetCanvas();

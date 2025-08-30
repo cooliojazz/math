@@ -58,10 +58,6 @@ public record Matrix3(double a, double b, double c,
         return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
     }
 
-    public static Matrix3 promote(Matrix2 mat) {
-        return new Matrix3(mat.a(), mat.b(), 0, mat.c(), mat.d(), 0, 0, 0, 1);
-    }
-
     public static Matrix3 scale(double s) {
         return new Matrix3(s, 0, 0, 0, s, 0, 0, 0, 1);
     }
