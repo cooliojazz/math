@@ -5,6 +5,7 @@ import com.up.math.shape.Rectangle2;
 
 import java.awt.geom.Point2D;
 
+// TODO: Should these be renamed VectorXs to better match the matrix/math conventions?
 public class Point2 extends Point2D.Double {
 
     public Point2(double x, double y) {

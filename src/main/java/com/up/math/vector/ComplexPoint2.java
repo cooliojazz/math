@@ -4,17 +4,17 @@ import com.up.math.Complex;
 
 public class ComplexPoint2 {
 
-    private Complex x;
-    private Complex y;
+    private final Complex x;
+    private final Complex y;
     
     public ComplexPoint2(Complex x, Complex y) {
         this.x = x;
         this.y = y;
     }
 
-//    public ComplexPoint2(Complex e) {
-//        super(e, e);
-//    }
+    public ComplexPoint2(Complex e) {
+        this(e, e);
+    }
     
     public Complex getX() {
         return x;

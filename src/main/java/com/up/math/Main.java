@@ -1,5 +1,7 @@
 package com.up.math;
 
+import com.up.math.matrix.ComplexAffineMatrix2;
+import com.up.math.matrix.Matrix2;
 import com.up.math.matrix.Matrix3;
 import com.up.math.vector.Point2;
 
@@ -9,13 +11,26 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.io.*;
 
 public class Main {
     
+    // new Complex(1.9, 0.1), new Point2(-0.06612147911913462, -0.2277348267646851)
+    // new Complex(4, 2), new Point2(-0.08350828339576327, -0.0015708583190908029)
+    // new Complex(2)
+    
     public static void main(String[] args) {
+        ComplexAffineMatrix2 m = new ComplexAffineMatrix2(new Complex(1), new Complex(5), new Complex(3), new Complex(4), new Complex(0), new Complex(1));
+        System.out.println(m.exp());
+        System.out.println(m.log());
+        System.out.println(m.log().exp());
+        System.out.println(m.exp().log());
+//        System.out.println(new Matrix2(0, 1, 2, 3).asComplex().compose(new Matrix2(4, 5, 6, 7).asComplex()));
+        if (true) return;
+        
         Frame f = new Frame("Fractals");
         f.setSize(1000, 800);
-        f.add(new StochasticFractalDrawer());
+        f.add(new StochasticFractalDrawer(new FractalParameters(2, new Point2(-0.08350828339576327, -0.0015708583190908029), new Complex(4, 2), 100)));
         f.setVisible(true);
     }
     
@@ -33,6 +48,8 @@ public class Main {
         }
     }
     
+    private record FractalParameters(double zoom, Point2 offset, Complex factor, double bound) {}
+    
     private static class StochasticFractalDrawer extends Canvas {
         
         private Gradient grad = new Gradient(new Color[] {Color.blue.darker(), Color.cyan.darker(), Color.yellow.darker().darker(), Color.red.darker(), Color.magenta.darker(), Color.blue.darker()});
@@ -41,21 +58,22 @@ public class Main {
         double pointSize = 8;
         
         private Matrix3 screen = Matrix3.identity();
-//        private Matrix3 zoom = Matrix3.identity();
-        private Matrix3 zoom = Matrix3.scale(2);
-//        private Matrix3 offset = Matrix3.identity();
-private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277348267646851));
-//        private Complex factor = new Complex(1.9, 0.1);
-        private Complex factor = new Complex(4, 2);
-//        private Complex factor = new Complex(2);
-        private double bound = 2;
+        private Matrix3 zoom;
+        private Matrix3 offset;
+        private Complex factor;
+        private double bound;
         
         private Point2 last = new Point2(0, 0);
         
-        private final int threads = 6;
+        private final int threads = 10;
         private boolean pause = false;
         
-        public StochasticFractalDrawer() {
+        public StochasticFractalDrawer(FractalParameters params) {
+            zoom = Matrix3.scale(params.zoom);
+            offset = Matrix3.offset(params.offset);
+            factor = params.factor;
+            bound = params.bound;
+            
             addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent e) {
@@ -66,11 +84,6 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
                     @Override
                     public void mouseDragged(MouseEvent e) {
                         Point2 p = new Point2(e.getPoint());
-//                        Point2 ip = screen.inverse().apply(p);
-//                        Point2 il = screen.inverse().apply(last);
-//                        Point2 wp = worldMatrix().apply(ip);
-//                        Point2 wl = worldMatrix().apply(il);
-//                        offset = Matrix3.offset(wp.to(wl)).compose(offset);
                         Point2 ptl = worldMatrix().linearMap().apply(screen.inverse().linearMap().apply(p.to(last)));
                         offset = Matrix3.offset(ptl).compose(offset);
                         reuseCanvas(Matrix3.offset(last.to(p)));
@@ -78,9 +91,7 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
                     }
                 });
             addMouseWheelListener(e -> {
-    //                Matrix3 ds = Matrix3.scale(Math.pow(2, e.getPreciseWheelRotation()));
                     Matrix3 ds = Matrix3.scale(Math.pow(2, e.getPreciseWheelRotation()));
-//                    view = Matrix3.offset(ds.apply(new Point2(view.c(), view.f()))).compose(ds.compose(view.linearMap().promote()));
                     zoom = ds.compose(zoom);
                     reuseCanvas(ds.inverse());
                 });
@@ -118,11 +129,23 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
             new Thread (() -> {
                     Matrix3 scale = Matrix3.scale(0.99);
                     while (true) {
-//                        if (zoom.determinant() < 1e-30 || zoom.determinant() > 1) scale = scale.inverse();
-//                        zoom = scale.compose(zoom);
+                        if (zoom.determinant() < 1e-30 || zoom.determinant() > 1) scale = scale.inverse();
+                        zoom = scale.compose(zoom);
 //                        factor = factor.add(new Complex(0.001));
-                        bound += 0.1;
+//                        bound += 0.1;
                         try {Thread.sleep(500);} catch (Exception e) {}
+                    }
+                }).start();
+            new Thread (() -> {
+                    try {
+                        File f = new File("out.ppm");
+                        FileOutputStream os = new FileOutputStream(f);
+                        while (true) {
+                            PPMImage.write(os, buffer);
+                            try {Thread.sleep(200);} catch (Exception e) {}
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
                 }).start();
         }
@@ -145,7 +168,7 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
 //                synchronized (buffer) {
                     if (esc < maxEscape) {
                         Color c = grad.get(Math.log10(esc) % 1);
-//                        Color c = grad.get(Math.log(esc) / Math.log(maxEscape));
+//                        Color x = grad.get(Math.log(esc) / Math.log(maxEscape));
                         g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 63));
                     } else {
                         g.setColor(Color.black);
@@ -168,27 +191,13 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
         }
         
         private void reuseCanvas(Matrix3 m) {
-//            int[] samples = buffer.getRaster().getPixels(0, 0, buffer.getWidth(), buffer.getHeight(), (int[])null);
-//            Graphics2D g = buffer.createGraphics();
-//            g.setBackground(Color.black);
-//            g.clearRect(0, 0, getWidth(), getHeight());
-//            Point2 ts = m.apply(new Point2(4, 4));
-//            for (int x = 0; x < getWidth(); x += 4) {
-//                for (int y = 0; y < getHeight(); y += 4) {
-//                    Point2 tp = m.apply(new Point2(x, y));
-//                    g.setColor(new Color(samples[(y * getWidth() + x) * 4], samples[(y * getWidth() + x) * 4 + 1], samples[(y * getWidth() + x) * 4 + 2], 255));
-//                    g.fillRect((int)tp.getX(), (int)tp.getY(), (int)ts.getX(), (int)ts.getY());
-//                }
-//            }
             Matrix3 mm = Matrix3.offset(getWidth() / 2d, getHeight() / 2d).compose(m.compose(Matrix3.offset(-getWidth() / 2d, -getHeight() / 2d)));
             Point2 tp = mm.apply(new Point2(0, 0));
-//            Point2 ts = mm.linearMap().apply(new Point2(getWidth(), getHeight()));
             Point2 te = mm.apply(new Point2(getWidth(), getHeight()));
             BufferedImage back = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = back.createGraphics();
             g.setBackground(Color.black);
             g.clearRect(0, 0, getWidth(), getHeight());
-//            g.drawImage(buffer, (int)tp.getX(), (int)tp.getY(), (int)ts.getX(), (int)ts.getY(), null);
             g.drawImage(buffer, (int)tp.getX(), (int)tp.getY(), (int)te.getX(), (int)te.getY(), 0, 0, getWidth (), getHeight(),null);
             buffer = back;
             
@@ -215,14 +224,10 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
             fg.setColor(Color.white);
             drawOutlineString(fg, "Factor: " + factor, 5, 15);
             drawOutlineString(fg, "Draw Size: " + pointSize, 5, 30);
-            drawOutlineString(fg, "Ms/d: " + (int)(mspd * 10000) / 10000d, 5, 45);
+            drawOutlineString(fg, "Ms/c: " + (int)(mspd * 10000) / 10000d, 5, 45);
             drawOutlineString(fg, "D/s: " + (int)(1000 / mspd * threads * 10) / 10d, 5, 60);
             fg.drawOval(getWidth() / 2 - 5, getHeight() /  2 - 5, 10, 10);
             
-//            g.clearRect(0, 0, getWidth(), getHeight());
-//            synchronized (buffer) {
-//                g.drawImage(buffer, 0, 0, null);
-//            }
             g.drawImage(frame, 0, 0, null);
         }
         
@@ -245,10 +250,7 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
         @Override
         public void reshape(int x, int y, int width, int height) {
             super.reshape(x, y, width, height);
-//            int sMax = Math.max(width, height);
-//            screen = Matrix3.scale(new Point2(sMax / 2d, sMax / 2d)).compose(Matrix3.offset(1, 1));
             screen = Matrix3.scale(new Point2(width / 2d, height / 2d)).compose(Matrix3.offset(1, 1));
-//            screen = Matrix3.offset(new Point2(-sMax / 2d, -sMax / 2d)).compose(Matrix3.scale(new Point2(sMax, sMax)));
             buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             resetCanvas();
         }
@@ -262,5 +264,24 @@ private Matrix3 offset = Matrix3.offset(new Point2(-0.06612147911913462, -0.2277
             z = z.pow(exp).add(c);
         }
         return i;
+    }
+    
+    private static class PPMImage {
+        
+        public static void write(OutputStream os, BufferedImage i) throws IOException {
+            os.write("P6\n".getBytes());
+            os.write((i.getWidth() + " " + i.getHeight() + "\n").getBytes());
+            os.write("255\n".getBytes());
+            for (int y = 0; y < i.getHeight(); y++) {
+                for (int x = 0; x < i.getWidth(); x++) {
+                    int rgba = i.getRGB(x, y);
+                    os.write((rgba >> 24) & 0xFF);
+                    os.write((rgba >> 16) & 0xFF);
+                    os.write((rgba >> 8) & 0xFF);
+//                    os.write(" ".getBytes());
+                }
+            }
+            os.flush();
+        }
     }
 }

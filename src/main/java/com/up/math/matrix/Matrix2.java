@@ -1,5 +1,6 @@
 package com.up.math.matrix;
 
+import com.up.math.Complex;
 import com.up.math.vector.Point2;
 
 import java.awt.geom.Point2D;
@@ -24,7 +25,7 @@ public record Matrix2(double a, double b,
     }
 
     public Matrix2 compose(Matrix2 m) {
-        return new Matrix2(m.a * a + m.c * b, m.a * c + m.c * d, m.b * a + m.d * b, m.b * c + m.d * d);
+        return new Matrix2(m.a * a + m.c * b, m.b * a + m.d * b, m.a * c + m.c * d, m.b * c + m.d * d);
     }
 
     public Point2 apply(Point2D p) {
@@ -51,13 +52,21 @@ public record Matrix2(double a, double b,
         return new Matrix3(a, b, 0, c, d, 0, 0, 0, 1);
     }
     
+    public ComplexMatrix2 asComplex() {
+        return new ComplexMatrix2(new Complex(a), new Complex(b), new Complex(c), new Complex(d));
+    }
+    
+    public AffineMatrix2 toAffine(Point2 offset) {
+        return new AffineMatrix2(a, b, c, d, offset.getX(), offset.getY());
+    }
+    
     @Override
     public String toString() {
         return "[[" + a + ", " + b + "][" + c + ", " + d + "]";
     }
     
     /**
-     * Computes e^this
+     * Computes d^this
      * @return the exponentiated matrix
      */
     public ComplexMatrix2 exp() {

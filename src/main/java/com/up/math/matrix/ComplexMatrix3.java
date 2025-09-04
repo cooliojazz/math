@@ -20,6 +20,7 @@ public record ComplexMatrix3(Complex a, Complex b, Complex c,
     }
 
     public ComplexMatrix3 inverse() {
+        if (determinant().equals(new Complex(0))) return null;
         ComplexMatrix3 cof = new ComplexMatrix3(new ComplexMatrix2(e, f, h, i).determinant(), new ComplexMatrix2(d, f, g, i).determinant().negate(), new ComplexMatrix2(d, e, g, h).determinant(),
                                                 new ComplexMatrix2(b, c, h, i).determinant().negate(), new ComplexMatrix2(a, c, g, i).determinant(), new ComplexMatrix2(a, b, g, h).determinant().negate(),
                                                 new ComplexMatrix2(b, c, e, f).determinant(), new ComplexMatrix2(a, c, d, f).determinant().negate(), new ComplexMatrix2(a, b, d, e).determinant());
@@ -50,6 +51,10 @@ public record ComplexMatrix3(Complex a, Complex b, Complex c,
 
     public ComplexMatrix2 linearMap() {
         return new ComplexMatrix2(a, b, d, e);
+    }
+    
+    public ComplexAffineMatrix2 asAffine() {
+        return new ComplexAffineMatrix2(a, b, d, e, c, f);
     }
 
     public static ComplexMatrix3 identity() {

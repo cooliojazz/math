@@ -21,6 +21,7 @@ public record Matrix3(double a, double b, double c,
     }
 
     public Matrix3 inverse() {
+        if (determinant() == 0) return null;
         Matrix3 other = new Matrix3(new Matrix2(e, f, h, i).determinant(), new Matrix2(d, f, g, i).determinant(), new Matrix2(d, e, g, h).determinant(),
                                     new Matrix2(b, c, h, i).determinant(), new Matrix2(a, c, g, i).determinant(), new Matrix2(a, b, g, h).determinant(),
                                     new Matrix2(b, c, e, f).determinant(), new Matrix2(a, c, d, f).determinant(), new Matrix2(a, b, d, e).determinant());
@@ -52,6 +53,10 @@ public record Matrix3(double a, double b, double c,
 
     public Matrix2 linearMap() {
         return new Matrix2(a, b, d, e);
+    }
+    
+    public AffineMatrix2 asAffine() {
+        return new AffineMatrix2(a, b, d, e, c, f);
     }
 
     public static Matrix3 identity() {

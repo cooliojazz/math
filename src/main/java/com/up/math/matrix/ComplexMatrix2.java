@@ -1,7 +1,9 @@
 package com.up.math.matrix;
 
 import com.up.math.Complex;
+import com.up.math.Util;
 import com.up.math.vector.ComplexPoint2;
+import com.up.math.vector.Point2;
 
 import java.awt.geom.Point2D;
 import java.util.function.Function;
@@ -34,10 +36,14 @@ public record ComplexMatrix2(Complex a, Complex b,
     }
 
     public ComplexMatrix2 compose(ComplexMatrix2 m) {
-        return new ComplexMatrix2(m.a.multiply(a).add(m.c.multiply(b)), m.a.multiply(c).add(m.c.multiply(d)), m.b.multiply(a).add(m.d.multiply(b)), m.b.multiply(c).add(m.d.multiply(d)));
+        return new ComplexMatrix2(m.a.multiply(a).add(m.c.multiply(b)), m.b.multiply(a).add(m.d.multiply(b)), m.a.multiply(c).add(m.c.multiply(d)), m.b.multiply(c).add(m.d.multiply(d)));
     }
     
     public ComplexPoint2 apply(Point2D p) {
+        return new ComplexPoint2(a.multiply(p.getX()).add(b.multiply(p.getY())), c.multiply(p.getX()).add(d.multiply(p.getY())));
+    }
+    
+    public ComplexPoint2 apply(ComplexPoint2 p) {
         return new ComplexPoint2(a.multiply(p.getX()).add(b.multiply(p.getY())), c.multiply(p.getX()).add(d.multiply(p.getY())));
     }
     
@@ -86,6 +92,10 @@ public record ComplexMatrix2(Complex a, Complex b,
         return new ComplexMatrix2(new Complex(1), new Complex(0), new Complex(0), new Complex(1));
     }
     
+    public ComplexAffineMatrix2 toAffine(ComplexPoint2 offset) {
+        return new ComplexAffineMatrix2(a, b, c, d, offset.getX(), offset.getY());
+    }
+    
     public Matrix2 real() {
         return new Matrix2(a.real(), b.real(), c.real(), d.real());
     }
@@ -101,5 +111,9 @@ public record ComplexMatrix2(Complex a, Complex b,
     @Override
     public String toString() {
         return "[[" + a + ", " + b + "][" + c + ", " + d + "]";
+    }
+    
+    public boolean roundedEquals(ComplexMatrix2 m, int precision) {
+        return a.roundedEquals(m.a, precision) && b.roundedEquals(m.b, precision) && c.roundedEquals(m.c, precision) && d.roundedEquals(m.d, precision);
     }
 }

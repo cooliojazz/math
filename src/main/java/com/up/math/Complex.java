@@ -115,6 +115,10 @@ public record Complex(double real, double imag) {
         return false;
     }
     
+    public boolean roundedEquals(Complex c, int precision) {
+        return Util.roundedEquals(real, c.real, precision) && Util.roundedEquals(imag, c.imag, precision);
+    }
+    
     @Override
     public String toString() {
         return real + (imag < 0 ? "" : "+") + imag + "i";
