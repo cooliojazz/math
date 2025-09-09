@@ -1,5 +1,7 @@
 package com.up.math.vector;
 
+import com.up.math.Util;
+
 public record Point3(double x, double y, double z) {
 
     public Point3(double e) {
@@ -51,5 +53,9 @@ public record Point3(double x, double y, double z) {
     public Point3 normalized() {
         double len = length();
         return new Point3(x / len, y / len, z / len);
+    }
+    
+    public boolean roundedEquals(Point3 p, int precision) {
+        return Util.roundedEquals(x, p.x, precision) && Util.roundedEquals(y, p.y, precision) && Util.roundedEquals(z, p.z, precision);
     }
 }

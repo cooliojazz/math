@@ -1,10 +1,6 @@
 package com.up.math.matrix;
 
-import com.up.math.Complex;
-import com.up.math.vector.Point2;
-import com.up.math.vector.Point3;
-
-import java.awt.geom.Point2D;
+import com.up.math.number.Complex;
 
 public record ComplexMatrix3(Complex a, Complex b, Complex c,
                              Complex d, Complex e, Complex f,

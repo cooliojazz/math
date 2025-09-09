@@ -63,6 +63,7 @@ public record Matrix3(double a, double b, double c,
         return new Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1);
     }
 
+    // TODO: 2d specific helpers should be moved to AffineMatrix2 and these should provide 3d methods instead
     public static Matrix3 scale(double s) {
         return new Matrix3(s, 0, 0, 0, s, 0, 0, 0, 1);
     }

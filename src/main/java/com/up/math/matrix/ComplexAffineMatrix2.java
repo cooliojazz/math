@@ -1,6 +1,6 @@
 package com.up.math.matrix;
 
-import com.up.math.Complex;
+import com.up.math.number.Complex;
 import com.up.math.vector.ComplexPoint2;
 
 public record ComplexAffineMatrix2(Complex a, Complex b, Complex c, Complex d, Complex x, Complex y) {

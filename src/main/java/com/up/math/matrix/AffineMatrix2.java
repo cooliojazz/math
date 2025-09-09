@@ -1,8 +1,13 @@
 package com.up.math.matrix;
 
-import com.up.math.Complex;
+import com.up.math.number.Complex;
 
 public record AffineMatrix2(double a, double b, double c, double d, double x, double y) {
+
+    public AffineMatrix2 compose(AffineMatrix2 m) {
+        return new AffineMatrix2(m.a * a + m.c * b, m.b * a + m.d * b, m.x * a + m.y * b + x,
+                           m.a * c + m.c * d, m.b * c + m.d * d, m.x * c + m.y * d + y);
+    }
     
     public ComplexAffineMatrix2 exp() {
         return asComplex().exp();

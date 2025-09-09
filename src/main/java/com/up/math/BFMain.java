@@ -5,13 +5,8 @@ import com.up.math.matrix.Matrix3;
 import com.up.math.number.BigFixed;
 import com.up.math.number.Complex;
 import com.up.math.number.ComplexBigFixed;
+import com.up.math.vector.BigFixedPoint2;
 import com.up.math.vector.Point2;
-
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
-
 import org.jcodec.api.SequenceEncoder;
 import org.jcodec.common.Codec;
 import org.jcodec.common.Format;
@@ -19,30 +14,19 @@ import org.jcodec.common.io.NIOUtils;
 import org.jcodec.common.model.Rational;
 import org.jcodec.scale.AWTUtil;
 
-public class Main {
-    
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+
+public class BFMain {
+
     // new Complex(1.9, 0.1), new Point2(-0.06612147911913462, -0.2277348267646851)
     // new Complex(4, 2), new Point2(-0.08350828339576327, -0.0015708583190908029)
     // new Complex(2)
-    
+
     public static void main(String[] args) {
-//        char[][] out = new char[16][100];
-//        for (int i = 0; i < 16; i++) {
-//            for (int j = 0; j < 100; j++) {
-//                out[i][j] = ' ';
-//            }
-//        }
-//        for (int i = 0; i < 100; i++) {
-//            BigFixed bf = BigFixed.fromDouble((i - 0.0) / 20 * Math.PI);
-//            int sh = (int)Math.round(bf.sin().toDouble() * 8 + 8);
-//            sh = Math.max(0, Math.min(15, sh));
-//            out[15 - sh][i] = '*';
-//            int ch = (int)Math.round(bf.cos().toDouble() * 8 + 8);
-//            ch = Math.max(0, Math.min(15, ch));
-//            out[15 - ch][i] = '#';
-//        }
-//        for (int i = 0; i < 16; i++) System.out.println(String.valueOf(out[i]));
-//        if (true) return;
+//        System.out.println(BigFixed.fromInt(10).sqrt());
         
         Frame f = new Frame("Fractals");
         f.addWindowListener(new WindowAdapter() {
@@ -52,53 +36,52 @@ public class Main {
                 }
             });
         f.setSize(1000, 800);
-        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100)));
-//        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.08350828339576327, -0.0015708583190908029), new Complex(4, 2), 100)));
+        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100)));
         f.setVisible(true);
     }
-    
+
     private record Gradient(Color[] stops) {
-        
+
         public Color get(double t) {
             double v = Math.max(0, Math.min(1, t)) * (stops.length - 1);
             Color c1 = stops[(int)Math.floor(v)];
             Color c2 = stops[(int)Math.ceil(v)];
             return new Color((int)lerp(c1.getRed(), c2.getRed(), v - (int)v), (int)lerp(c1.getGreen(), c2.getGreen(), v - (int)v), (int)lerp(c1.getBlue(), c2.getBlue(), v - (int)v));
         }
-        
+
         private double lerp(double a, double b, double t) {
             return a + (b - a) * t;
         }
     }
-    
+
     private record FractalParameters(double zoom, Point2 offset, Complex factor, double bound) {}
-    
+
     private static class StochasticFractalDrawer extends Canvas {
-        
+
         private Gradient grad = new Gradient(new Color[] {Color.blue.darker(), Color.cyan.darker(), Color.yellow.darker().darker(), Color.red.darker(), Color.magenta.darker(), Color.blue.darker()});
-        
+
         private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        double pointSize = 6;
-        
+        double pointSize = 10;
+
         private Matrix3 screen = Matrix3.identity();
-        private Matrix3 zoom;
-        private Matrix3 offset;
-        private Complex factor;
+        private BigFixedMatrix3 zoom;
+        private BigFixedMatrix3 offset;
+        private ComplexBigFixed factor;
         private double bound;
-        
+
         private Point2 last = new Point2(0, 0);
-        
-        private final int threads = 4;
+
+        private final int threads = 16;
         private boolean pause = false;
         private boolean ui = true;
         private boolean recording = true;
-        
+
         public StochasticFractalDrawer(FractalParameters params) {
-            zoom = Matrix3.scale(params.zoom);
-            offset = Matrix3.offset(params.offset);
-            factor = params.factor;
+            zoom = BigFixedMatrix3.scale(BigFixed.fromDouble(params.zoom));
+            offset = BigFixedMatrix3.offset(BigFixedPoint2.fromPoint2(params.offset));
+            factor = ComplexBigFixed.fromComplex(params.factor);
             bound = params.bound;
-            
+
             addMouseListener(new MouseAdapter() {
                     @Override
                     public void mousePressed(MouseEvent e) {
@@ -109,45 +92,45 @@ public class Main {
                     @Override
                     public void mouseDragged(MouseEvent e) {
                         Point2 p = new Point2(e.getPoint());
-                        Point2 ptl = worldMatrix().linearMap().apply(screen.inverse().linearMap().apply(p.to(last)));
-                        offset = Matrix3.offset(ptl).compose(offset);
+                        BigFixedPoint2 ptl = worldMatrix().linearMap().apply(BigFixedPoint2.fromPoint2(screen.inverse().linearMap().apply(p.to(last))));
+                        offset = BigFixedMatrix3.offset(ptl).compose(offset);
                         reuseCanvas(Matrix3.offset(last.to(p)));
                         last = p;
                     }
                 });
             addMouseWheelListener(e -> {
-                double speed = e.isShiftDown() ? 1.1 : 2;
-                Matrix3 ds = Matrix3.scale(Math.pow(speed, e.getPreciseWheelRotation()));
-                    zoom = ds.compose(zoom);
+                    double speed = e.isShiftDown() ? 1.1 : 2;
+                    Matrix3 ds = Matrix3.scale(Math.pow(speed, e.getPreciseWheelRotation()));
+                    zoom = BigFixedMatrix3.fromMatrix3(ds).compose(zoom);
                     reuseCanvas(ds.inverse());
                 });
             addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyTyped(KeyEvent e) {
                     if (e.getKeyChar() == ',') {
-                        factor = factor.subtract(new Complex(0.1));
+                        factor = factor.subtract(new ComplexBigFixed(BigFixed.fromDouble(0.1)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == '.') {
-                        factor = factor.add(new Complex(0.1));
+                        factor = factor.add(new ComplexBigFixed(BigFixed.fromDouble(0.1)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == ';') {
-                        factor = factor.subtract(new Complex(0, 0.1));
+                        factor = factor.subtract(new ComplexBigFixed(BigFixed.fromDouble(0), BigFixed.fromDouble(0.1)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == '\'') {
-                        factor = factor.add(new Complex(0, 0.1));
+                        factor = factor.add(new ComplexBigFixed(BigFixed.fromDouble(0), BigFixed.fromDouble(0.1)));
                         resetCanvas();
                     }
-                    
+
                     if (e.getKeyChar() == '[') {
                         if (pointSize > 1) pointSize--;
                     }
                     if (e.getKeyChar() == ']') {
                         pointSize++;
                     }
-                    
+
                     if (e.getKeyChar() == 'p') pause = !pause;
                     if (e.getKeyChar() == 'u') ui = !ui;
                     if (e.getKeyChar() == 'r') recording = !recording;
@@ -155,11 +138,10 @@ public class Main {
             });
             for (int i = 0; i < threads; i++) new Thread(this::calculate).start();
 //            new Thread (() -> {
-//                    Matrix3 scale = Matrix3.scale(0.999);
+//                    BigFixedMatrix3 scale = BigFixedMatrix3.scale(BigFixed.fromDouble(0.999));
 //                    while (true) {
-//                        if (zoom.determinant() < 1e-30 || zoom.determinant() > 2) scale = scale.inverse();
+//                        if (zoom.determinant().compareTo(BigFixed.fromDouble(1e-30)) < 0 || zoom.determinant().compareTo(BigFixed.fromDouble(2)) > 0) scale = scale.inverse();
 //                        zoom = scale.compose(zoom);
-            // TODO: This should use the reuseCanvas right?
 ////                        factor = factor.add(new Complex(0.001));
 ////                        bound += 0.1;
 //                        try {Thread.sleep(100);} catch (Exception e) {}
@@ -186,13 +168,13 @@ public class Main {
 //                    }
 //                }).start();
         }
-        
-        private Matrix3 worldMatrix() {
+
+        private BigFixedMatrix3 worldMatrix() {
             return offset.compose(zoom);
         }
-        
+
         private static double mspd = 0;
-        
+
         private void calculate() {
             while (true) {
                 while (pause) {
@@ -201,7 +183,7 @@ public class Main {
                 long time = System.nanoTime();
                 Graphics2D g = buffer.createGraphics();
                 Point2 p = new Point2(Math.random() * 2 - 1, Math.random() * 2 - 1);
-                int esc = fractalCheck(worldMatrix().apply(p).asComplex(), new Complex(0.25, -0.5), factor, bound);
+                int esc = fractalCheck(worldMatrix().apply(BigFixedPoint2.fromPoint2(p)).asComplex(), ComplexBigFixed.fromComplex(new Complex(0.25, -0.5)), factor, bound);
 //                synchronized (buffer) {
                     if (esc < maxEscape) {
                         Color c = grad.get(Math.log10(esc) % 1);
@@ -215,18 +197,18 @@ public class Main {
 //                g.drawRect((int)Math.round(sp.x), (int)Math.round(sp.y), 0, 0);
                     g.fillOval((int)Math.round(sp.x - (pointSize - 1) / 2d), (int)Math.round(sp.y - (pointSize - 1) / 2d), (int)pointSize, (int)pointSize);
 //                }
-                mspd = mspd * 0.9999 + (System.nanoTime() - time) / 1000000d * 0.0001;
+                mspd = mspd * 0.999 + (System.nanoTime() - time) / 1000000d * 0.001;
                 repaint();
             }
         }
-        
+
         private void resetCanvas() {
             Graphics2D g = buffer.createGraphics();
             g.setBackground(Color.black);
             g.clearRect(0, 0, getWidth(), getHeight());
             repaint();
         }
-        
+
         private void reuseCanvas(Matrix3 m) {
             Matrix3 mm = Matrix3.offset(getWidth() / 2d, getHeight() / 2d).compose(m.compose(Matrix3.offset(-getWidth() / 2d, -getHeight() / 2d)));
             Point2 tp = mm.apply(new Point2(0, 0));
@@ -237,41 +219,41 @@ public class Main {
             g.clearRect(0, 0, getWidth(), getHeight());
             g.drawImage(buffer, (int)tp.getX(), (int)tp.getY(), (int)te.getX(), (int)te.getY(), 0, 0, getWidth (), getHeight(),null);
             buffer = back;
-            
+
             repaint();
         }
-        
+
         @Override
         public void paint(Graphics g) {
 //            g.clearRect(0, 0, getWidth(), getHeight());
 //            g.drawImage(buffer, 0, 0, null);
-            
+
             BufferedImage frame = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
             Graphics2D fg = frame.createGraphics();
             fg.drawImage(buffer, 0, 0, null);
-            
+
             if (ui) {
-                fg.setColor(Color.magenta);
-                Matrix3 worldToScreen = screen.compose(worldMatrix().inverse());
-                Point2 lb = worldToScreen.apply(new Point2(-1, -1));
-                Point2 ub = worldToScreen.apply(new Point2(1, 1));
-                int size = (int)(lb.to(ub).length() / 25);
-                fg.drawOval((int)Math.round(lb.getX()), (int)Math.round(lb.getY()), size, size);
-                fg.drawOval((int)Math.round(ub.getX()), (int)Math.round(ub.getY()), size, size);
-                
+//                fg.setColor(Color.magenta);
+//                Matrix3 worldToScreen = screen.compose(worldMatrix().inverse());
+//                Point2 lb = worldToScreen.apply(new Point2(-1, -1));
+//                Point2 ub = worldToScreen.apply(new Point2(1, 1));
+//                int size = (int)(lb.to(ub).length() / 25);
+//                fg.drawOval((int)Math.round(lb.getX()), (int)Math.round(lb.getY()), size, size);
+//                fg.drawOval((int)Math.round(ub.getX()), (int)Math.round(ub.getY()), size, size);
+
                 fg.setColor(Color.white);
-                drawOutlineString(fg, "Offset: (" + offset.c() + ", " + offset.f() + ")", 5, 15);
+                drawOutlineString(fg, "Offset: (" + offset.c().toDouble() + ", " + offset.f().toDouble() + ")", 5, 15);
                 drawOutlineString(fg, "Factor: " + factor, 5, 30);
-                drawOutlineString(fg, "Zoom: " + zoom.a(), 5, 45);
+                drawOutlineString(fg, "Zoom: " + zoom.a().toDouble(), 5, 45);
                 drawOutlineString(fg, "Draw Size: " + pointSize, 5, 60);
                 drawOutlineString(fg, "Ms/c: " + (int)(mspd * 10000) / 10000d, 5, 75);
                 drawOutlineString(fg, "D/s: " + (int)(1000 / mspd * threads * 10) / 10d, 5, 90);
                 fg.drawOval(getWidth() / 2 - 5, getHeight() / 2 - 5, 10, 10);
             }
-            
+
             g.drawImage(frame, 0, 0, null);
         }
-        
+
         private static void drawOutlineString(Graphics g, String s, int x, int y) {
             g.setColor(Color.black);
             for (int sx = -1; sx < 2; sx++) {
@@ -282,12 +264,12 @@ public class Main {
             g.setColor(Color.white);
             g.drawString(s, x, y);
         }
-        
+
         @Override
         public void update(Graphics g) {
             paint(g);
         }
-        
+
         @Override
         public void reshape(int x, int y, int width, int height) {
             super.reshape(x, y, width, height);
@@ -298,17 +280,21 @@ public class Main {
             resetCanvas();
         }
     }
-    
-    private static int maxEscape = 10000;
-    
-    private static int fractalCheck(Complex z, Complex c, Complex exp, double bound) {
+
+    private static int maxEscape = 1000;
+
+    /**
+     * Ignores exp for now since ComplexBigFixed is missing pow
+     */
+    private static int fractalCheck(ComplexBigFixed z, ComplexBigFixed c, ComplexBigFixed exp, double bound) {
         int i;
-        for (i = 0; i < maxEscape && z.magnitude() < bound; i++) {
-            z = z.pow(exp).add(c);
+        for (i = 0; i < maxEscape && z.magnitudeSq().compareTo(BigFixed.fromDouble(bound).square()) < 0; i++) {
+//            z = z.pow(exp).add(c);
+            z = z.multiply(z).add(c);
         }
         return i;
     }
-    
+
 //    private static class PPMImage {
 //        
 //        public static void write(OutputStream os, BufferedImage i) throws IOException {

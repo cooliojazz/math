@@ -1,5 +1,6 @@
-package com.up.math;
+package com.up.math.number;
 
+import com.up.math.Util;
 import com.up.math.vector.Point2;
 
 public record Complex(double real, double imag) {

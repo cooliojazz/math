@@ -19,6 +19,11 @@ public class MatrixTest {
         ComplexMatrix2 m2 = new Matrix2(1.01, 2.002, 3.0003, 4.0004).asComplex();
         assert m1.roundedEquals(m2, 1);
         assert !m1.roundedEquals(m2, 10);
+        
+        ComplexAffineMatrix2 ma1 = new AffineMatrix2(1, 2, 3, 4, 5, 6).asComplex();
+        ComplexAffineMatrix2 ma2 = new AffineMatrix2(1.01, 2.002, 3.0003, 4.0004, 5.00005, 6.0000006).asComplex();
+        assert ma1.roundedEquals(ma2, 1);
+        assert !ma1.roundedEquals(ma2, 10);
     }
     
     public static void compose2() {
