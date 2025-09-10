@@ -404,7 +404,7 @@ public class BigFixed implements Cloneable, Comparable<BigFixed> {
     }
 
     public double toDouble() {
-		if (compareTo(new BigFixed()) == 0) return 0;
+		if (abs().compareTo(new BigFixed()) == 0) return 0;
 		int firstOne = -1;
 		for (int i = 0; i < size && firstOne == -1; i++) {
 			for (int b = 15; b >= 0; b--) {
@@ -426,8 +426,8 @@ public class BigFixed implements Cloneable, Comparable<BigFixed> {
 		long bits = (sign ? 1l : 0l) << 63 | (overflow ? 0x7FF : (1023l + shift)) << 52 |
 				(long)(shifted.parts[1] & 0xFFFF) << 36 |
                 (parts.length > 2 ? (long)(shifted.parts[2] & 0xFFFF) << 20 : 0) |
-                (parts.length > 2 ? (shifted.parts[3] & 0xFFFF) << 4 : 0) |
-                (parts.length > 2 ? (shifted.parts[4] & 0xF000) >> 12 : 0);
+                (parts.length > 3 ? (shifted.parts[3] & 0xFFFF) << 4 : 0) |
+                (parts.length > 4 ? (shifted.parts[4] & 0xF000) >> 12 : 0);
 		return Double.longBitsToDouble(bits);
     }
 

@@ -3,6 +3,7 @@ package com.up.math;
 import com.up.math.matrix.BigFixedMatrix3;
 import com.up.math.matrix.Matrix3;
 import com.up.math.number.BigFixed;
+import com.up.math.number.BiggerFixed;
 import com.up.math.number.Complex;
 import com.up.math.number.ComplexBigFixed;
 import com.up.math.vector.BigFixedPoint2;
@@ -26,7 +27,6 @@ public class BFMain {
     // new Complex(2)
 
     public static void main(String[] args) {
-//        System.out.println(BigFixed.fromInt(10).sqrt());
         
         Frame f = new Frame("Fractals");
         f.addWindowListener(new WindowAdapter() {
