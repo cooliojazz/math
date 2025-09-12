@@ -1,84 +1,84 @@
 package com.up.math.vector;
 
 import com.up.math.number.BigFixed;
-import com.up.math.number.Complex;
 import com.up.math.number.ComplexBigFixed;
 
 import java.awt.geom.Point2D;
 
-public class BigFixedPoint2 {
+public class BigFixedPoint2<T extends BigFixed<T>> {
 
-    private final BigFixed x;
-    private final BigFixed y;
+    private final T x;
+    private final T y;
     
-    public BigFixedPoint2(BigFixed x, BigFixed y) {
+    public BigFixedPoint2(T x, T y) {
         this.x = x;
         this.y = y;
     }
 
-    public BigFixedPoint2(BigFixed e) {
+    public BigFixedPoint2(T e) {
         this(e, e);
     }
     
-    public BigFixed getX() {
+    public T getX() {
         return x;
     }
     
-    public BigFixed getY() {
+    public T getY() {
         return y;
     }
     
-//    public ComplexPoint2 sum(ComplexPoint2 p) {
-//        return new ComplexPoint2(x + p.getX(), y + p.getY());
-//    }
-//
-//    public ComplexPoint2 sub(Point2D p) {
-//        return new ComplexPoint2(x - p.getX(), y - p.getY());
-//    }
-//
-//    public ComplexPoint2 mul(Point2D p) {
-//        return new ComplexPoint2(x * p.getX(), y * p.getY());
-//    }
-//
-//    public ComplexPoint2 to(Point2D p) {
-//        return new ComplexPoint2(p.getX() - x, p.getY() - y);
-//    }
-//
-//    public double dot(Point2D p) {
-//        return x * p.getX() + y * p.getY();
-//    }
-//
-//    public ComplexPoint2 scale(double s) {
-//        return new ComplexPoint2(x * s, y * s);
-//    }
-//
+    public BigFixedPoint2<T> sum(BigFixedPoint2<T> p) {
+        return new BigFixedPoint2<T>(x.add(p.getX()), y.add(p.getY()));
+    }
+
+    public BigFixedPoint2<T> sub(BigFixedPoint2<T> p) {
+        return new BigFixedPoint2<>(x.sub(p.getX()), y.sub(p.getY()));
+    }
+
+    public BigFixedPoint2<T> mul(BigFixedPoint2<T> p) {
+        return new BigFixedPoint2<>(x.mult(p.getX()), y.mult(p.getY()));
+    }
+
+    public BigFixedPoint2<T> to(BigFixedPoint2<T> p) {
+        return new BigFixedPoint2<>(p.getX().sub(x), p.getY().sub(y));
+    }
+
+    public T dot(BigFixedPoint2<T> p) {
+        return x.mult(p.getX()).add(y.mult(p.getY()));
+    }
+
+    public BigFixedPoint2<T> scale(T s) {
+        return new BigFixedPoint2<>(x.mult(s), y.mult(s));
+    }
+
 //    public ComplexPoint2 constrain(Rectangle2 rect) {
 //        return new ComplexPoint2(Math.max(rect.getStart().x, Math.min(rect.getEnd().x, x)), Math.max(rect.getStart().y, Math.min(rect.getEnd().y, y)));
 //    }
-//
-//    public double length() {
-//        return Math.sqrt(x * x + y * y);
-//    }
-//
-//    public BigFixed abs() {
-//        return new ComplexPoint2(Math.abs(x), Math.abs(y));
-//    }
-//
-//    public BigFixed normalized() {
-//        double len = length();
-//        return new ComplexPoint2(x / len, y / len);
-//    }
+
+    public T length() {
+        return x.sqrt().add(y.square()).sqrt();
+    }
+
+    public BigFixedPoint2<T> abs() {
+        return new BigFixedPoint2<>(x.abs(), y.abs());
+    }
+
+    public BigFixedPoint2<T> normalized() {
+        T len = length();
+        return new BigFixedPoint2<>(x.div(len), y.div(len));
+    }
     
-    public ComplexBigFixed asComplex() {
-        return new ComplexBigFixed(x, y);
+    public ComplexBigFixed<T> asComplex() {
+        return new ComplexBigFixed<>(x, y);
     }
     
     public Point2 toPoint2() {
         return new Point2(x.toDouble(), y.toDouble());
     }
     
-    public static BigFixedPoint2 fromPoint2(Point2D p) {
-        return new BigFixedPoint2(BigFixed.fromDouble(p.getX()), BigFixed.fromDouble(p.getY()));
+    public static <T extends BigFixed<T>> BigFixedPoint2<T> fromPoint2(Point2D p, Class<T> type) {
+        // TODO: Need to figure out how to provide these static methods but in an interface format?
+        return new BigFixedPoint2<T>(BigFixed.fromDouble(p.getX(), type), BigFixed.fromDouble(p.getY(), type));
     }
     
 //    public boolean roundedEquals(BigFixedPoint2 p, int precision) {

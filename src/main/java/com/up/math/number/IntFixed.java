@@ -4,30 +4,67 @@ package com.up.math.number;
  * Represents an 32.32X fixed point number
  * @author Ricky
  */
-public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow) implements Cloneable, Comparable<BiggerFixed> {
+public final class IntFixed extends BigFixed<IntFixed> {
+//    public record IntFixed(boolean sign, int size, int[] parts, boolean overflow) extends BigFixed<com.up.math.number.IntFixed> {
     // TODO: It seems like it should be more possible to actually have dynamically sized numbers with how this is written now?
     
     final static int FIXED_MAX = 5;
     
-    public static final BiggerFixed PI = BiggerFixed.fromBitString(" 00000000000000000000000000000011.001001000011111101101010100010001000010110100011000010001101001100010011000110011000101000101110000000110111000001110011010001001010010000001001");
+    public static final IntFixed ZERO = IntFixed.fromInt(0);
+    public static final IntFixed ONE = IntFixed.fromInt(1);
+    public static final IntFixed PI = IntFixed.fromBitString(" 00000000000000000000000000000011.001001000011111101101010100010001000010110100011000010001101001100010011000110011000101000101110000000110111000001110011010001001010010000001001");
 
+    private final boolean sign;
+    private final int size;
+    private final int[] parts;
+    private final boolean overflow;
+    
+    public IntFixed(boolean sign, int size, int[] parts, boolean overflow) {
+        this.sign = sign;
+        this.size = size;
+        this.parts = parts;
+        this.overflow = overflow;
+    }
 
-	public BiggerFixed() {
+	public IntFixed() {
         this(false, 1, new int[FIXED_MAX], false);
 	}
+    
+    @Override
+    public IntFixed zero() {
+        return ZERO;
+    }
+    
+    @Override
+    public IntFixed one() {
+        return ONE;
+    }
+    
+    @Override
+    public IntFixed pi() {
+        return PI;
+    }
+    
+    public boolean sign() {
+        return sign;
+    }
+    
+    public int size() {
+        return size;
+    }
 
-    BiggerFixed expand() {
+    IntFixed expand() {
         int nSize = size + 1;
         if (nSize > FIXED_MAX) {
 //            System.out.println("Warning: Fixed number size exceeded.");
             nSize = FIXED_MAX;
         }
-        return new BiggerFixed(sign, nSize, parts, overflow);
+        return new IntFixed(sign, nSize, parts, overflow);
     }
 
     // TODO: Rewrite these in the newer direct creation format
-    BiggerFixed lshBF(int amount) {
-        BiggerFixed ans = clone();
+    IntFixed lshBF(int amount) {
+        IntFixed ans = clone();
         for (int i = 0; i < amount; i++) {
             for (int j = 0; j < ans.size; j++) {
                 if (j > 0) ans.parts[j - 1] |= ans.parts[j] >>> 31;
@@ -37,8 +74,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         return ans.reduce();
     }
 
-    BiggerFixed rshBF(int amount) {
-        BiggerFixed ans = clone();
+    IntFixed rshBF(int amount) {
+        IntFixed ans = clone();
         for (int i = 0; i < amount; i++) {
 			ans = ans.expand();
             for (int j = ans.size - 1; j >= 0; j--) {
@@ -50,8 +87,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         return ans;
     }
 
-    public BiggerFixed lshParts(int amount) {
-        BiggerFixed ans = clone();
+    public IntFixed lshParts(int amount) {
+        IntFixed ans = clone();
         for (int i = 0; i < amount; i++) {
             for (int j = 1; j < ans.size; j++) {
                 ans.parts[j - 1] = ans.parts[j];
@@ -61,8 +98,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         return ans.reduce();
     }
 
-    public BiggerFixed rshParts(int amount) {
-        BiggerFixed ans = clone();
+    public IntFixed rshParts(int amount) {
+        IntFixed ans = clone();
         for (int i = 0; i < amount; i++) {
 			ans = ans.expand();
             for (int j = ans.size - 1; j >= 0; j--) {
@@ -74,11 +111,11 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         return ans;
     }
     
-    public BiggerFixed abs() {
-        return new BiggerFixed(false, size, parts, overflow);
+    public IntFixed abs() {
+        return new IntFixed(false, size, parts, overflow);
     }
     
-    public BiggerFixed reduce() {
+    public IntFixed reduce() {
         boolean empty = true;
         int nSize = size;
         for (int i = nSize - 1; i > 0 && empty; i--) {
@@ -89,27 +126,24 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
                 empty = false;
             }
         }
-        return new BiggerFixed(sign, nSize, parts, overflow);
+        return new IntFixed(sign, nSize, parts, overflow);
     }
 
-//    public static BiggerFixed fromDouble(double a) {
-//        BiggerFixed ans = new BiggerFixed();
-//        long raw = Double.doubleToRawLongBits(a);
-//        ans.sign = raw >>> 63 != 0;
-//        int exponent = (int)((raw & 0x7FF0000000000000l) >>> 52) - 1023;
-//        ans.size = 5;
-//        ans.parts[0] = 1;
-//        ans.parts[1] = (int)((raw & 0xFFFF000000000l) >> 36);
-//        ans.parts[2] = (int)((raw & 0xFFFF00000l) >> 20);
-//        ans.parts[3] = (int)((raw & 0xFFFF0l) >> 4);
-//        ans.parts[4] = (int)(raw & 0xF);
-//        // Then shift for days
-//        if (exponent < 0) ans = ans.rshBF(-exponent);
-//        if (exponent > 0) ans = ans.lshBF(exponent);
-//        return ans.reduce();
-//    }
+    public static IntFixed fromDouble(double a) {
+        long raw = Double.doubleToRawLongBits(a);
+        int exponent = (int)((raw & 0x7FF0000000000000l) >>> 52) - 1023;
+        int[] parts = new int[FIXED_MAX];
+        parts[0] = 1;
+        parts[1] = (int)((raw & 0xFFFFFFFF00000l) >> 20);
+        parts[2] = (int)((raw & 0xFFFFFl) << 12);
+        // Then shift for days
+        IntFixed ans = new IntFixed(raw >>> 63 != 0, 3, parts, false);
+        if (exponent < 0) ans = ans.rshBF(-exponent);
+        if (exponent > 0) ans = ans.lshBF(exponent);
+        return ans.reduce();
+    }
 
-    public static BiggerFixed fromInt(int a) {
+    public static IntFixed fromInt(int a) {
         int[] parts = new int[FIXED_MAX];
         boolean sign = (a & 0x80000000) >> 31 != 0;
         if (sign) {
@@ -117,10 +151,10 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         } else {
 			parts[0] = a;
 		}
-        return new BiggerFixed(sign, 1, parts, false);
+        return new IntFixed(sign, 1, parts, false);
     }
 
-    public static BiggerFixed fromShort(short a) {
+    public static IntFixed fromShort(short a) {
         int[] parts = new int[FIXED_MAX];
         boolean sign = (a & 0x8000) >> 15 != 0;
         if (sign) {
@@ -128,10 +162,10 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
         } else {
             parts[0] = a & 0xFFFF;
 		}
-        return new BiggerFixed(sign, 1, parts, false);
+        return new IntFixed(sign, 1, parts, false);
     }
 
-    public static BiggerFixed fromBitString(String s) {
+    public static IntFixed fromBitString(String s) {
         int[] parts = new int[FIXED_MAX];
         int size = (s.length() - 2) / 32;
         for (int i = 0; i < size; i++) {
@@ -139,14 +173,14 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 				parts[i] |= (s.charAt(i * 32 + b + (i > 0 ? 2 : 1)) == '0' ? 0 : 1) << (31 - b);
 			}
 		}
-        return new BiggerFixed(s.charAt(0) == '-', size, parts, false);
+        return new IntFixed(s.charAt(0) == '-', size, parts, false);
     }
 
-    public BiggerFixed negate() {
-        return new BiggerFixed(!sign, size, parts, overflow);
+    public IntFixed negate() {
+        return new IntFixed(!sign, size, parts, overflow);
     }
 
-    public BiggerFixed add(BiggerFixed b) {
+    public IntFixed add(IntFixed b) {
 		if (sign != b.sign) return sub(b.negate());
         int nSize = Math.max(size, b.size);
         int[] nParts = new int[FIXED_MAX];
@@ -162,11 +196,11 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 		if (carry > 0) {
             nOverflow = true;
 		}
-        return new BiggerFixed(sign, nSize, nParts, nOverflow);
+        return new IntFixed(sign, nSize, nParts, nOverflow);
     }
 
-    public BiggerFixed sub(BiggerFixed b) {
-        BiggerFixed a = clone();
+    public IntFixed sub(IntFixed b) {
+        IntFixed a = clone();
 		if (a.sign != b.sign) return add(b.negate());
         int nSize = Math.max(size, b.size);
         boolean nSign = sign;
@@ -188,15 +222,15 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 		if (borrow > 0) {
             nOverflow = true;
 		}
-        return new BiggerFixed(nSign, nSize, nParts, nOverflow).reduce();
+        return new IntFixed(nSign, nSize, nParts, nOverflow).reduce();
     }
 
-    public BiggerFixed mult(BiggerFixed b) {
-        BiggerFixed ans = new BiggerFixed();
+    public IntFixed mult(IntFixed b) {
+        IntFixed ans = new IntFixed();
         int nSize = Math.min(FIXED_MAX, size + b.size - 1); // (size - 1 + (b.size - 1)) + 1;
 		boolean nOverflow = overflow || b.overflow;
         for (int i = size - 1; i >= 0; i--) {
-			BiggerFixed temp = new BiggerFixed(false, Math.min(FIXED_MAX, b.size + 1), new int[FIXED_MAX], false);
+			IntFixed temp = new IntFixed(false, Math.min(FIXED_MAX, b.size + 1), new int[FIXED_MAX], false);
 			long carry = 0;
 			for (int j = Math.min(FIXED_MAX - 2, b.size - 1); j >= 0; j--) {
 				long part = carry;
@@ -218,13 +252,13 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 			}
 
 		}
-        return new BiggerFixed(sign ^ b.sign, nSize, ans.parts, nOverflow).reduce();
+        return new IntFixed(sign ^ b.sign, nSize, ans.parts, nOverflow).reduce();
     }
 
-    public BiggerFixed div(BiggerFixed b) {
+    public IntFixed div(IntFixed b) {
         // Just trying reusing the inverse code for now, there's probably a better way
-        BiggerFixed div = b.abs();
-        BiggerFixed rem = abs();
+        IntFixed div = b.abs();
+        IntFixed rem = abs();
         int[] nParts = new int[FIXED_MAX];
         int nSize = 2;
         int pos = -1;
@@ -232,7 +266,7 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
             div = div.lshBF(1);
             pos--;
         }
-        while (!rem.equals(new BiggerFixed()) && pos < (FIXED_MAX - 1) * 32) {
+        while (!rem.equals(new IntFixed()) && pos < (FIXED_MAX - 1) * 32) {
             if (rem.compareTo(div) >= 0) {
                 rem = rem.sub(div);
                 int tpos = pos + 32;
@@ -242,13 +276,13 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
             div = div.rshBF(1);
             pos++;
         }
-        return new BiggerFixed(sign ^ b.sign, nSize, nParts, false).reduce();
+        return new IntFixed(sign ^ b.sign, nSize, nParts, false).reduce();
     }
 //    
 //    /**
 //     * Fairly limited by the 32-bit integer part of the number
 //     */
-//    public BiggerFixed inverse() {
+//    public BigFixed inverse() {
 //        // Only worked for powers of 2
 ////        int revI = 0;
 ////        for (int i = 0; i < 16; i++) {
@@ -262,16 +296,16 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 ////        }
 ////        return new BigFixed(sign, 2, new int[] {(int)revF, (int)revI});
 //        
-//        BiggerFixed div = this;
-//        BiggerFixed rem = fromInt(1);
-//        BiggerFixed ans = new BiggerFixed();
+//        BigFixed div = this;
+//        BigFixed rem = fromInt(1);
+//        BigFixed ans = new BigFixed();
 //        ans.size = 2;
 //        int pos = -1;
 //        while (rem.compareTo(div) > 0 && pos > -15) {
 //            div = div.lshBF(1);
 //            pos--;
 //        }
-//        while (!rem.equals(new BiggerFixed()) && pos < (FIXED_MAX - 1) * 16) {
+//        while (!rem.equals(new BigFixed()) && pos < (FIXED_MAX - 1) * 16) {
 //            if (rem.compareTo(div) >= 0) {
 //                rem = rem.sub(div);
 //                ans.parts[(pos + 16) / 16] |= 1 << (15 - ((pos + 16) % 16));
@@ -283,24 +317,28 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 //        return ans;
 //    }
 
+    public IntFixed inverse() {
+        return ONE.div(this);
+    }
+
     
-    public BiggerFixed sqrt() {
-        BiggerFixed val = this;
+    public IntFixed sqrt() {
+        IntFixed val = this;
         // TODO: Replace arbitrary precision with some form of convergence testing?
-        BiggerFixed two = BiggerFixed.fromInt(2);
+        IntFixed two = IntFixed.fromInt(2);
         for (int i = 0; i < 8; i++) {
-//            val = BiggerFixed.fromDouble(0.5).mult(val.add(this.div(val)));
+//            val = BigFixed.fromDouble(0.5).mult(val.add(this.div(val)));
             val = val.add(this.div(val)).div(two);
         }
         return val;
     }
 
-    public BiggerFixed square() {
+    public IntFixed square() {
         return mult(this);
     }
 
-    public BiggerFixed pow(int p) {
-        BiggerFixed ans = this;
+    public IntFixed pow(int p) {
+        IntFixed ans = this;
         for (int i = 1; i < p; i++) {
             ans = ans.mult(this);
         }
@@ -311,8 +349,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
      * A poor approximation of sin
      * @return
      */
-    public BiggerFixed sin() {
-        BiggerFixed val = this;
+    public IntFixed sin() {
+        IntFixed val = this;
         while (val.compareTo(PI.negate()) < 0) {
             val = val.add(PI.mult(fromInt(2)));
         }
@@ -328,8 +366,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
      * A poor approximation of sinh
      * @return
      */
-    public BiggerFixed sinh() {
-        BiggerFixed val = this;
+    public IntFixed sinh() {
+        IntFixed val = this;
         return val.add(val.pow(3).div(fromInt(6)))
                   .add(val.pow(5).div(fromInt(120)))
                   .add(val.pow(7).div(fromInt(5040)));
@@ -339,8 +377,8 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
      * A poor approximation of cosh
      * @return
      */
-    public BiggerFixed cosh() {
-        BiggerFixed val = this;
+    public IntFixed cosh() {
+        IntFixed val = this;
         return val.add(val.pow(2).div(fromInt(2)))
                   .add(val.pow(4).div(fromInt(24)))
                   .add(val.pow(6).div(fromInt(720)));
@@ -350,7 +388,7 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
      * Uses the poor approximation of sin
      * @return
      */
-    public BiggerFixed cos() {
+    public IntFixed cos() {
         return add(PI.div(fromInt(2))).sin();
     }
 
@@ -358,34 +396,12 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
      * A poor approximation of atan
      * @return
      */
-    public BiggerFixed atan() {
+    public IntFixed atan() {
         return sub(pow(3).div(fromInt(3))).add(pow(5).div(fromInt(5))).sub(pow(7).div(fromInt(7)));
     }
 
-    public static BiggerFixed atan2(BiggerFixed x, BiggerFixed y) {
-        int x0 = x.compareTo(new BiggerFixed());
-        int y0 = y.compareTo(new BiggerFixed());
-        if (x0 > 0) {
-            return y.div(x).atan();
-        } else if (x0 < 0) {
-            if (y0 >= 0) {
-                return y.div(x).atan().add(PI);
-            } else {
-                return y.div(x).atan().sub(PI);
-            } 
-        } else {
-            if (y0 > 0) {
-                return PI.rshBF(1);
-            } else if (y0 < 0) {
-                return PI.rshBF(1).negate();
-            } else {
-                return null;
-            }
-        }
-    }
-
     public double toDouble() {
-		if (abs().compareTo(new BiggerFixed()) == 0) return 0;
+		if (abs().compareTo(new IntFixed()) == 0) return 0;
 		int firstOne = -1;
 		for (int i = 0; i < size && firstOne == -1; i++) {
 			for (int b = 31; b >= 0; b--) {
@@ -396,7 +412,7 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
 			}
 		}
 		int shift = 31 - firstOne;
-		BiggerFixed shifted;
+		IntFixed shifted;
 		if (shift > 0) {
 			shifted = rshBF(shift);
 		} else if (shift < 0) {
@@ -424,12 +440,12 @@ public record BiggerFixed(boolean sign, int size, int[] parts, boolean overflow)
     }
     
     @Override
-    public BiggerFixed clone() {
-        return new BiggerFixed(sign, size, parts.clone(), overflow);
+    public IntFixed clone() {
+        return new IntFixed(sign, size, parts.clone(), overflow);
     }
 
     @Override
-    public int compareTo(BiggerFixed o) {
+    public int compareTo(IntFixed o) {
         // this < o == -, this > o == +
 		if (overflow && !o.overflow) return sign ? -1 : 1;
 		if (!overflow && o.overflow) return o.sign ? -1 : 1;

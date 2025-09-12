@@ -2,23 +2,14 @@ package com.up.math;
 
 import com.up.math.matrix.BigFixedMatrix3;
 import com.up.math.matrix.Matrix3;
-import com.up.math.number.BigFixed;
-import com.up.math.number.BiggerFixed;
-import com.up.math.number.Complex;
-import com.up.math.number.ComplexBigFixed;
+import com.up.math.number.*;
 import com.up.math.vector.BigFixedPoint2;
 import com.up.math.vector.Point2;
-import org.jcodec.api.SequenceEncoder;
-import org.jcodec.common.Codec;
-import org.jcodec.common.Format;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Rational;
-import org.jcodec.scale.AWTUtil;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.math.BigInteger;
 
 public class BFMain {
 
@@ -36,7 +27,8 @@ public class BFMain {
                 }
             });
         f.setSize(1000, 800);
-        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100)));
+//        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100)));
+        f.add(new StochasticFractalDrawer<>(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100), IntFixed.class));
         f.setVisible(true);
     }
 
@@ -56,7 +48,9 @@ public class BFMain {
 
     private record FractalParameters(double zoom, Point2 offset, Complex factor, double bound) {}
 
-    private static class StochasticFractalDrawer extends Canvas {
+    private static class StochasticFractalDrawer<T extends BigFixed<T>> extends Canvas {
+        
+        private Class<T> type;
 
         private Gradient grad = new Gradient(new Color[] {Color.blue.darker(), Color.cyan.darker(), Color.yellow.darker().darker(), Color.red.darker(), Color.magenta.darker(), Color.blue.darker()});
 
@@ -64,22 +58,24 @@ public class BFMain {
         double pointSize = 10;
 
         private Matrix3 screen = Matrix3.identity();
-        private BigFixedMatrix3 zoom;
-        private BigFixedMatrix3 offset;
-        private ComplexBigFixed factor;
+        private BigFixedMatrix3<T> zoom;
+        private BigFixedMatrix3<T> offset;
+        private ComplexBigFixed<T> factor;
         private double bound;
 
         private Point2 last = new Point2(0, 0);
 
-        private final int threads = 16;
+        private final int threads = Runtime.getRuntime().availableProcessors() * 3 / 4;
         private boolean pause = false;
         private boolean ui = true;
         private boolean recording = true;
 
-        public StochasticFractalDrawer(FractalParameters params) {
-            zoom = BigFixedMatrix3.scale(BigFixed.fromDouble(params.zoom));
-            offset = BigFixedMatrix3.offset(BigFixedPoint2.fromPoint2(params.offset));
-            factor = ComplexBigFixed.fromComplex(params.factor);
+        public StochasticFractalDrawer(FractalParameters params, Class<T> type) {
+            this.type = type;
+            
+            zoom = BigFixedMatrix3.scale(BigFixed.fromDouble(params.zoom, type));
+            offset = BigFixedMatrix3.offset(BigFixedPoint2.fromPoint2(params.offset, type));
+            factor = ComplexBigFixed.fromComplex(params.factor, type);
             bound = params.bound;
 
             addMouseListener(new MouseAdapter() {
@@ -92,7 +88,7 @@ public class BFMain {
                     @Override
                     public void mouseDragged(MouseEvent e) {
                         Point2 p = new Point2(e.getPoint());
-                        BigFixedPoint2 ptl = worldMatrix().linearMap().apply(BigFixedPoint2.fromPoint2(screen.inverse().linearMap().apply(p.to(last))));
+                        BigFixedPoint2<T> ptl = worldMatrix().linearMap().apply(BigFixedPoint2.fromPoint2(screen.inverse().linearMap().apply(p.to(last)), type));
                         offset = BigFixedMatrix3.offset(ptl).compose(offset);
                         reuseCanvas(Matrix3.offset(last.to(p)));
                         last = p;
@@ -101,26 +97,26 @@ public class BFMain {
             addMouseWheelListener(e -> {
                     double speed = e.isShiftDown() ? 1.1 : 2;
                     Matrix3 ds = Matrix3.scale(Math.pow(speed, e.getPreciseWheelRotation()));
-                    zoom = BigFixedMatrix3.fromMatrix3(ds).compose(zoom);
+                    zoom = BigFixedMatrix3.fromMatrix3(ds, type).compose(zoom);
                     reuseCanvas(ds.inverse());
                 });
             addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyTyped(KeyEvent e) {
                     if (e.getKeyChar() == ',') {
-                        factor = factor.subtract(new ComplexBigFixed(BigFixed.fromDouble(0.1)));
+                        factor = factor.subtract(new ComplexBigFixed<>(BigFixed.fromDouble(0.1, type)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == '.') {
-                        factor = factor.add(new ComplexBigFixed(BigFixed.fromDouble(0.1)));
+                        factor = factor.add(new ComplexBigFixed<>(BigFixed.fromDouble(0.1, type)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == ';') {
-                        factor = factor.subtract(new ComplexBigFixed(BigFixed.fromDouble(0), BigFixed.fromDouble(0.1)));
+                        factor = factor.subtract(new ComplexBigFixed<>(BigFixed.fromDouble(0, type), BigFixed.fromDouble(0.1, type)));
                         resetCanvas();
                     }
                     if (e.getKeyChar() == '\'') {
-                        factor = factor.add(new ComplexBigFixed(BigFixed.fromDouble(0), BigFixed.fromDouble(0.1)));
+                        factor = factor.add(new ComplexBigFixed<>(BigFixed.fromDouble(0, type), BigFixed.fromDouble(0.1, type)));
                         resetCanvas();
                     }
 
@@ -169,7 +165,7 @@ public class BFMain {
 //                }).start();
         }
 
-        private BigFixedMatrix3 worldMatrix() {
+        private BigFixedMatrix3<T> worldMatrix() {
             return offset.compose(zoom);
         }
 
@@ -183,7 +179,8 @@ public class BFMain {
                 long time = System.nanoTime();
                 Graphics2D g = buffer.createGraphics();
                 Point2 p = new Point2(Math.random() * 2 - 1, Math.random() * 2 - 1);
-                int esc = fractalCheck(worldMatrix().apply(BigFixedPoint2.fromPoint2(p)).asComplex(), ComplexBigFixed.fromComplex(new Complex(0.25, -0.5)), factor, bound);
+                int esc = fractalCheck(ComplexBigFixed.fromComplex(new Complex(0, 0), type), worldMatrix().apply(BigFixedPoint2.fromPoint2(p, type)).asComplex(), factor, BigFixed.fromDouble(bound, type));
+//                int esc = fractalCheck(worldMatrix().apply(BigFixedPoint2.fromPoint2(p, IntFixed.class)).asComplex(), ComplexBigFixed.fromComplex(new Complex(0.25, -0.5), IntFixed.class), factor, IntFixed.fromDouble(bound));
 //                synchronized (buffer) {
                     if (esc < maxEscape) {
                         Color c = grad.get(Math.log10(esc) % 1);
@@ -281,37 +278,17 @@ public class BFMain {
         }
     }
 
-    private static int maxEscape = 1000;
+    private static int maxEscape = 10000;
 
     /**
      * Ignores exp for now since ComplexBigFixed is missing pow
      */
-    private static int fractalCheck(ComplexBigFixed z, ComplexBigFixed c, ComplexBigFixed exp, double bound) {
+    private static <T extends BigFixed<T>> int fractalCheck(ComplexBigFixed<T> z, ComplexBigFixed<T> c, ComplexBigFixed<T> exp, BigFixed<T> bound) {
         int i;
-        for (i = 0; i < maxEscape && z.magnitudeSq().compareTo(BigFixed.fromDouble(bound).square()) < 0; i++) {
+        for (i = 0; i < maxEscape && z.magnitudeSq().compareTo(bound.square()) < 0; i++) {
 //            z = z.pow(exp).add(c);
             z = z.multiply(z).add(c);
         }
         return i;
     }
-
-//    private static class PPMImage {
-//        
-//        public static void write(OutputStream os, BufferedImage i) throws IOException {
-//            os.write("P6\n".getBytes());
-//            os.write((i.getWidth() + " " + i.getHeight() + "\n").getBytes());
-//            os.write("255\n".getBytes());
-//            for (int y = 0; y < i.getHeight(); y++) {
-//                for (int x = 0; x < i.getWidth(); x++) {
-//                    int argb = i.getRGB(x, y);
-////                    os.write((argb >> 24) & 0xFF);
-//                    os.write((argb >> 16) & 0xFF);
-//                    os.write((argb >> 8) & 0xFF);
-//                    os.write(argb & 0xFF);
-////                    os.write(" ".getBytes());
-//                }
-//            }
-//            os.flush();
-//        }
-//    }
 }

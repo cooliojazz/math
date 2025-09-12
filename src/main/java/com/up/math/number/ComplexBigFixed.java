@@ -1,70 +1,71 @@
 package com.up.math.number;
 
-import com.up.math.Util;
-import com.up.math.matrix.BigFixedMatrix3;
 import com.up.math.vector.BigFixedPoint2;
-import com.up.math.vector.Point2;
 
-public record ComplexBigFixed(BigFixed real, BigFixed imag) {
+import java.util.function.Supplier;
+
+public record ComplexBigFixed<T extends BigFixed<T>>(T real, T imag) {
     
-    public static final ComplexBigFixed ZERO = new ComplexBigFixed(BigFixed.fromInt(0));
-    
-    public ComplexBigFixed(BigFixed real) {
-        this(real, BigFixed.fromInt(0));
+    public ComplexBigFixed(T real) {
+        this(real, real.zero());
     }
     
-    public static ComplexBigFixed fromPolar(BigFixed radius, BigFixed theta) {
-        return new ComplexBigFixed(radius.mult(theta.cos()), radius.mult(theta.sin()));
+    public static <T extends BigFixed<T>> ComplexBigFixed<T> zero(Supplier<T> ts) {
+        return new ComplexBigFixed<>(ts.get());
     }
     
-    public ComplexBigFixed add(ComplexBigFixed c) {
-        return new ComplexBigFixed(real.add(c.real), imag.add(c.imag));
+    public static ComplexBigFixed<IntFixed> fromPolar(IntFixed radius, IntFixed theta) {
+        return new ComplexBigFixed<>(radius.mult(theta.cos()), radius.mult(theta.sin()));
     }
     
-    public ComplexBigFixed subtract(ComplexBigFixed c) {
-        return new ComplexBigFixed(real.sub(c.real), imag.sub(c.imag));
+    public ComplexBigFixed<T> add(ComplexBigFixed<T> c) {
+        return new ComplexBigFixed<>(real.add(c.real), imag.add(c.imag));
     }
     
-    public ComplexBigFixed multiply(BigFixed d) {
-        return new ComplexBigFixed(real.mult(d), imag.mult(d));
+    public ComplexBigFixed<T> subtract(ComplexBigFixed<T> c) {
+        return new ComplexBigFixed<>(real.sub(c.real), imag.sub(c.imag));
     }
     
-    public ComplexBigFixed multiply(ComplexBigFixed c) {
-        return new ComplexBigFixed(real.mult(c.real).sub(imag.mult(c.imag)), real.mult(c.imag).add(imag.mult(c.real)));
+    public ComplexBigFixed<T> multiply(T d) {
+        return new ComplexBigFixed<>(real.mult(d), imag.mult(d));
     }
     
-    public ComplexBigFixed conjugate() {
-        return new ComplexBigFixed(real, imag.negate());
+    public ComplexBigFixed<T> multiply(ComplexBigFixed<T> c) {
+        return new ComplexBigFixed<>(real.mult(c.real).sub(imag.mult(c.imag)), real.mult(c.imag).add(imag.mult(c.real)));
+    }
+    
+    public ComplexBigFixed<T> conjugate() {
+        return new ComplexBigFixed<>(real, imag.negate());
     }
 
-    public BigFixed magnitude() {
+    public T magnitude() {
         return real.mult(real).add(imag.mult(imag)).sqrt();
     }
     
-    public BigFixed magnitudeSq() {
+    public T magnitudeSq() {
         return real.mult(real).add(imag.mult(imag));
     }
     
-    public ComplexBigFixed negate() {
-        return new ComplexBigFixed(real.negate(), imag.negate());
+    public ComplexBigFixed<T> negate() {
+        return new ComplexBigFixed<>(real.negate(), imag.negate());
     }
     
-    public ComplexBigFixed inverse() {
-        BigFixed dSq = real.mult(real).add(imag.mult(imag));
-        return new ComplexBigFixed(real.mult(dSq.inverse()), imag.negate().mult(dSq.inverse()));
+    public ComplexBigFixed<T> inverse() {
+        T dSq = real.mult(real).add(imag.mult(imag));
+        return new ComplexBigFixed<>(real.mult(dSq.inverse()), imag.negate().mult(dSq.inverse()));
     }
     
-    public ComplexBigFixed sqrt() {
-        BigFixed dist = magnitude();
-        return new ComplexBigFixed(dist.add(real).sqrt(), sign(imag).mult(dist.sub(real).sqrt())).multiply(BigFixed.fromDouble(Math.sqrt(2)).inverse());
+    public ComplexBigFixed<T> sqrt() {
+        T dist = magnitude();
+        return new ComplexBigFixed<>(dist.add(real).sqrt(), sign(imag).mult(dist.sub(real).sqrt())).multiply(BigFixed.fromDouble(Math.sqrt(2), (Class<T>)real.getClass()).inverse());
     }
     
-//    public ComplexBigFixed exp() {
-//        return new ComplexBigFixed(Math.exp(real) * Math.cos(imag), Math.exp(real) * Math.sin(imag));
+//    public ComplexBigFixed<T> exp() {
+//        return new ComplexBigFixed<>(real.exp().mult(imag.cos()), real.exp().mult(imag.sin()));
 //    }
-//    
-//    public ComplexBigFixed log() {
-//        return new ComplexBigFixed(Math.log(magnitude()), Math.atan2(imag, real));
+//
+//    public ComplexBigFixed<T> log() {
+//        return new ComplexBigFixed<>(magnitude().log(), T.atan2(imag, real));
 //    }
     
     /**
@@ -72,12 +73,12 @@ public record ComplexBigFixed(BigFixed real, BigFixed imag) {
      * @param d
      * @return
      */
-    private static BigFixed sign(BigFixed d) {
-        return d.sign ? BigFixed.fromInt(-1) : BigFixed.fromInt(1);
+    private static <T extends BigFixed<T>> T sign(T d) {
+        return d.sign() ? d.one().negate() : d.one();
     }
     
-    public BigFixed azimuth() {
-        return BigFixed.atan2(imag, real);
+    public T azimuth() {
+        return T.atan2(imag, real);
     }
     
 //    /**
@@ -85,7 +86,7 @@ public record ComplexBigFixed(BigFixed real, BigFixed imag) {
 //     * @param d
 //     * @return
 //     */
-//    public ComplexBigFixed pow(BigFixed d) {
+//    public ComplexBigFixed<T> pow(T d) {
 //        return ComplexBigFixed.fromPolar(magnitude().pow(d), azimuth().mult(d));
 //    }
     
@@ -104,20 +105,20 @@ public record ComplexBigFixed(BigFixed real, BigFixed imag) {
 //        return ComplexBigFixed.fromPolar(1, c.imag * Math.log(d)).multiply(Math.pow(d, c.real));
 //    }
 
-    public ComplexBigFixed cos() {
-        return new ComplexBigFixed(real.cos().mult(imag.cosh()), real.sin().negate().mult(imag.sinh()));
+    public ComplexBigFixed<T> cos() {
+        return new ComplexBigFixed<>(real.cos().mult(imag.cosh()), real.sin().negate().mult(imag.sinh()));
     }
 
-    public ComplexBigFixed sin() {
-        return new ComplexBigFixed(real.sin().mult(imag.cosh()), real.cos().mult(imag.sinh()));
+    public ComplexBigFixed<T> sin() {
+        return new ComplexBigFixed<>(real.sin().mult(imag.cosh()), real.cos().mult(imag.sinh()));
     }
 
-    public BigFixedPoint2 asPoint() {
-        return new BigFixedPoint2(real, imag);
+    public BigFixedPoint2<T> asPoint() {
+        return new BigFixedPoint2<>(real, imag);
     }
     
-    public static ComplexBigFixed fromComplex(Complex c) {
-        return new ComplexBigFixed(BigFixed.fromDouble(c.real()), BigFixed.fromDouble(c.imag()));
+    public static <T extends BigFixed<T>> ComplexBigFixed<T> fromComplex(Complex c, Class<T> type) {
+        return new ComplexBigFixed<T>(BigFixed.fromDouble(c.real(), type), BigFixed.fromDouble(c.imag(), type));
     }
     
     @Override
@@ -132,7 +133,7 @@ public record ComplexBigFixed(BigFixed real, BigFixed imag) {
     
     @Override
     public String toString() {
-        return real.toDouble() + (imag.compareTo(BigFixed.fromInt(0)) < 0 ? "" : "+") + imag.toDouble() + "i";
+        return real.toDouble() + (imag.compareTo(real.zero()) < 0 ? "" : "+") + imag.toDouble() + "i";
     }
     
 }

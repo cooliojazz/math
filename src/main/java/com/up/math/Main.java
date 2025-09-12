@@ -1,23 +1,12 @@
 package com.up.math;
 
-import com.up.math.matrix.BigFixedMatrix3;
 import com.up.math.matrix.Matrix3;
-import com.up.math.number.BigFixed;
 import com.up.math.number.Complex;
-import com.up.math.number.ComplexBigFixed;
 import com.up.math.vector.Point2;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
-import java.io.*;
-
-import org.jcodec.api.SequenceEncoder;
-import org.jcodec.common.Codec;
-import org.jcodec.common.Format;
-import org.jcodec.common.io.NIOUtils;
-import org.jcodec.common.model.Rational;
-import org.jcodec.scale.AWTUtil;
 
 public class Main {
     
