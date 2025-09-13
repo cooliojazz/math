@@ -4,7 +4,8 @@ import com.up.math.vector.BigFixedPoint2;
 
 import java.util.function.Supplier;
 
-public record ComplexBigFixed<T extends BigFixed<T>>(T real, T imag) {
+// TODO: This is the prototype for the new more generic Complex class
+public record ComplexBigFixed<T extends Computable<T>>(T real, T imag) {
     
     public ComplexBigFixed(T real) {
         this(real, real.zero());
@@ -81,29 +82,29 @@ public record ComplexBigFixed<T extends BigFixed<T>>(T real, T imag) {
         return T.atan2(imag, real);
     }
     
-//    /**
-//     * Returns the principal root for this raised to the real d
-//     * @param d
-//     * @return
-//     */
-//    public ComplexBigFixed<T> pow(T d) {
-//        return ComplexBigFixed.fromPolar(magnitude().pow(d), azimuth().mult(d));
-//    }
+    /**
+     * Returns the principal root for this raised to the real d
+     * @param d
+     * @return
+     */
+    public ComplexBigFixed<T> pow(T d) {
+        return ComplexBigFixed.fromPolar(magnitude().pow(d), azimuth().mult(d));
+    }
     
-//    /**
-//     * Returns the principal root for this raised to the complex c
-//     * @param c
-//     * @return
-//     */
-//    public ComplexBigFixed pow(ComplexBigFixed c) {
-//        ComplexBigFixed theta = c.multiply(azimuth());
-//        return ComplexBigFixed.pow(magnitude(), c).multiply(theta.cos().add(theta.sin().multiply(new ComplexBigFixed(0, 1))));
-//    }
+    /**
+     * Returns the principal root for this raised to the complex c
+     * @param c
+     * @return
+     */
+    public ComplexBigFixed<T> pow(ComplexBigFixed<T> c) {
+        ComplexBigFixed<T> theta = c.multiply(azimuth());
+        return ComplexBigFixed.pow(magnitude(), c).multiply(theta.cos().add(theta.sin().multiply(new ComplexBigFixed<T>(0, 1))));
+    }
     
-//    public static ComplexBigFixed pow(double d, ComplexBigFixed c) {
-//        if (d == 0) return new ComplexBigFixed(0);
-//        return ComplexBigFixed.fromPolar(1, c.imag * Math.log(d)).multiply(Math.pow(d, c.real));
-//    }
+    public static ComplexBigFixed<T> pow(double d, ComplexBigFixed<T> c) {
+        if (d == 0) return new ComplexBigFixed<>(0);
+        return ComplexBigFixed.fromPolar(1, c.imag * Math.log(d)).multiply(Math.pow(d, c.real));
+    }
 
     public ComplexBigFixed<T> cos() {
         return new ComplexBigFixed<>(real.cos().mult(imag.cosh()), real.sin().negate().mult(imag.sinh()));

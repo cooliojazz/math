@@ -423,6 +423,15 @@ public class ShortFixed extends BigFixed<ShortFixed> {
             }
         }
     }
+    @Override
+    public ShortFixed exp2() {
+        return null;
+    }
+    
+    @Override
+    public ShortFixed log2() {
+        return null;
+    }
 
     public double toDouble() {
 		if (abs().compareTo(new ShortFixed()) == 0) return 0;
@@ -502,27 +511,6 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         if (sign && o.sign) return -comp;
         return comp;
     }
-	
-	public byte[] toClBytes() {
-		byte[] bytes = new byte[clByteSize()];
-		for (int i = 0; i < FIXED_MAX; i++) {
-			bytes[i * 2] = (byte)(parts[i] & 0xFF);
-			bytes[i * 2 + 1] = (byte)(parts[i] >> 8 & 0xFF);
-		}
-		bytes[FIXED_MAX * 2] = (byte)(size & 0xFF);
-		bytes[FIXED_MAX * 2 + 1] = (byte)(size >> 8 & 0xFF);
-		bytes[FIXED_MAX * 2 + 2] = (byte)(size >> 16 & 0xFF);
-		bytes[FIXED_MAX * 2 + 3] = (byte)(size >> 24 & 0xFF);
-		bytes[FIXED_MAX * 2 + 4] = sign ? (byte)1 : (byte)0;
-		bytes[FIXED_MAX * 2 + 5] = 0;
-		bytes[FIXED_MAX * 2 + 6] = 0;
-		bytes[FIXED_MAX * 2 + 7] = 0;
-		return bytes;
-	}
-	
-	public static int clByteSize() {
-		return FIXED_MAX * 2 + 5 + 3;
-	}
 
 }
 

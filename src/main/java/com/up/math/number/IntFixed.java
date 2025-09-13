@@ -399,7 +399,58 @@ public final class IntFixed extends BigFixed<IntFixed> {
     public IntFixed atan() {
         return sub(pow(3).div(fromInt(3))).add(pow(5).div(fromInt(5))).sub(pow(7).div(fromInt(7)));
     }
-
+    
+    public IntFixed integ() {
+        int[] nParts = new int[FIXED_MAX];
+        nParts[0] = parts[0];
+        return new IntFixed(sign, 1, nParts, overflow);
+    }
+    
+    public IntFixed frac() {
+        int[] nParts = new int[FIXED_MAX];
+        System.arraycopy(parts, 1, nParts, 1, FIXED_MAX - 1);
+        return new IntFixed(sign, size, nParts, overflow);
+    }
+    
+    // Obviously too much precision for a double here, rework to an exact initializer later
+    private static final IntFixed E2 = IntFixed.fromDouble(0.69314718055994530941723212145817656807550013436025525412068000949339362196);
+    private static final IntFixed E22 = IntFixed.fromDouble(0.48045301391820142466710252632666497173055295159454558686686413362366538225);
+    
+    @Override
+    public IntFixed exp2() {
+        // Only 2 term taylor approximation not extremely accurate but reasonably fast
+        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy?
+        IntFixed f = frac();
+        return one().lshBF(integ().toInt()).mult(one().add(f.mult(E2).add(f.square().mult(E22))));
+    }
+    
+    private static final IntFixed L2 = IntFixed.fromDouble(0.69314718055994530941723212145817656807550013436025525412068000949339362196);
+    @Override
+    public IntFixed log2() {
+        return log().div(L2);
+    }
+    
+    public IntFixed log() {
+//        IntFixed i = integ();
+//        IntFixed f = frac();
+//        // log2(int) doesnt seem to work that way :(
+////        return one().rshBF(i.toInt()).mult(L2)
+//                    .add(f.div(i))
+//                    .sub(f.pow(2).div(i.pow(2).mult(IntFixed.fromInt(2))))
+//                    .add(f.pow(3).div(i.pow(3).mult(IntFixed.fromInt(3))));
+        return null;
+    }
+    
+    //2^x=y
+    //1>>x=y
+    
+    //x=log2(y)
+    // inverse shift???
+    
+    public int toInt() {
+        return (parts[0] & 0x7FFFFFFF) | (sign ? 0x80000000 : 0);
+    }
+    
     public double toDouble() {
 		if (abs().compareTo(new IntFixed()) == 0) return 0;
 		int firstOne = -1;

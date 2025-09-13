@@ -10,6 +10,10 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.math.BigInteger;
+import java.util.Deque;
+import java.util.LinkedList;
+import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class BFMain {
 
@@ -18,6 +22,9 @@ public class BFMain {
     // new Complex(2)
 
     public static void main(String[] args) {
+////        System.out.println(IntFixed.fromDouble(0.001).exp2());
+//        System.out.println(IntFixed.fromDouble(2).log());
+//        if (true) return;
         
         Frame f = new Frame("Fractals");
         f.addWindowListener(new WindowAdapter() {
@@ -132,7 +139,9 @@ public class BFMain {
                     if (e.getKeyChar() == 'r') recording = !recording;
                 }
             });
-            for (int i = 0; i < threads; i++) new Thread(this::calculate).start();
+//            for (int i = 0; i < threads; i++) new Thread(this::calculate).start();
+            new Thread(this::alternateRenderManager).start();
+            for (int i = 0; i < threads; i++) new Thread(this::alternateRender).start();
 //            new Thread (() -> {
 //                    BigFixedMatrix3 scale = BigFixedMatrix3.scale(BigFixed.fromDouble(0.999));
 //                    while (true) {
@@ -194,6 +203,54 @@ public class BFMain {
 //                g.drawRect((int)Math.round(sp.x), (int)Math.round(sp.y), 0, 0);
                     g.fillOval((int)Math.round(sp.x - (pointSize - 1) / 2d), (int)Math.round(sp.y - (pointSize - 1) / 2d), (int)pointSize, (int)pointSize);
 //                }
+                mspd = mspd * 0.999 + (System.nanoTime() - time) / 1000000d * 0.001;
+                repaint();
+            }
+        }
+        
+        private final CopyOnWriteArrayList<Point2> queue = new CopyOnWriteArrayList<>();
+        private int blockLevel = 1;
+        
+        private void alternateRenderManager() {
+            while (true) {
+                while (pause || !queue.isEmpty()) {
+                    try {Thread.sleep(10);} catch (Exception e) {}
+                }
+                blockLevel++;
+                int blocks = 1 << blockLevel;
+                Point2 blockSize = new Point2(getWidth(), getHeight()).scale(1d / blocks);
+                Matrix3 si = screen.inverse();
+                for (int x = 0; x < blocks; x++) {
+                    for (int y = 0; y < blocks; y++) {
+                        queue.add(si.apply(blockSize.mul(new Point2(x, y))));
+                    }
+                }
+            }
+        }
+        
+        private void alternateRender() {
+            while (true) {
+                while (pause || queue.isEmpty()) {
+                    try {Thread.sleep(10);} catch (Exception e) {}
+                }
+                Point2 p;
+                try {
+                    p = queue.removeFirst();
+                } catch (NoSuchElementException ex) {
+                    continue;
+                }
+                long time = System.nanoTime();
+                Graphics2D g = buffer.createGraphics();
+                int esc = fractalCheck(ComplexBigFixed.fromComplex(new Complex(0, 0), type), worldMatrix().apply(BigFixedPoint2.fromPoint2(p, type)).asComplex(), factor, BigFixed.fromDouble(bound, type));
+                if (esc < maxEscape) {
+                    Color c = grad.get(Math.log10(esc) % 1);
+                    g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 63));
+                } else {
+                    g.setColor(Color.black);
+                }
+                Point2 sp = screen.apply(p);
+                Point2 blockSize = new Point2(getWidth(), getHeight()).scale(1d / (1 << blockLevel));
+                g.fillRect((int)Math.round(sp.x), (int)Math.round(sp.y), (int)Math.round(blockSize.x), (int)Math.round(blockSize.y));
                 mspd = mspd * 0.999 + (System.nanoTime() - time) / 1000000d * 0.001;
                 repaint();
             }

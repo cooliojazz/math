@@ -49,6 +49,9 @@ public abstract class BigFixed<T extends BigFixed<T>> implements Comparable<T>, 
     abstract public T cosh();
 
     abstract public T atan();
+    
+    abstract public T exp2();
+    abstract public T log2();
 
     public static <T extends BigFixed<T>> T atan2(T x, T y) {
         int x0 = x.compareTo(x.zero());
