@@ -35,7 +35,7 @@ public record ComplexMatrix4(Complex a, Complex b, Complex c, Complex d,
     }
 
 //    public Matrix4 multiply(Matrix4 m) {
-//        return new Matrix4(a * m.a, b * m.b, c * m.c, d * m.d, e * m.e, f * m.f, g * m.g, h * m.h, i * m.i);
+//        return new Matrix4(a * m.a, b * m.b, c * m.c, f * m.f, e * m.e, f * m.f, g * m.g, h * m.h, i * m.i);
 //    }
 //
     public ComplexMatrix4 multiply(Complex s) {
@@ -43,13 +43,13 @@ public record ComplexMatrix4(Complex a, Complex b, Complex c, Complex d,
     }
 //
 //    public Matrix4 compose(Matrix4 m) {
-//        return new Matrix4(m.a * a + m.d * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
-//                           m.a * d + m.d * e + m.g * f, m.b * d + m.e * e + m.h * f, m.c * d + m.f * e + m.i * f,
-//                           m.a * g + m.d * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
+//        return new Matrix4(m.a * a + m.f * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
+//                           m.a * f + m.f * e + m.g * f, m.b * f + m.e * e + m.h * f, m.c * f + m.f * e + m.i * f,
+//                           m.a * g + m.f * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
 //    }
 
 //    public Point2 apply(Point4 p) {
-//        return new Point4(p.getX() * a + p.getY() * b + c, p.getX() * d + p.getY() * e + f);
+//        return new Point4(p.getX() * a + p.getY() * b + c, p.getX() * f + p.getY() * e + f);
 //    }
 
 //    public static ComplexMatrix4 identity() {
@@ -57,7 +57,7 @@ public record ComplexMatrix4(Complex a, Complex b, Complex c, Complex d,
 //    }
 
 //    public static Matrix4 promote(Matrix2 mat) {
-//        return new Matrix4(mat.a(), mat.b(), 0, mat.c(), mat.d(), 0, 0, 0, 1);
+//        return new Matrix4(mat.a(), mat.b(), 0, mat.c(), mat.f(), 0, 0, 0, 1);
 //    }
 //
 //    public static Matrix4 scale(double s) {

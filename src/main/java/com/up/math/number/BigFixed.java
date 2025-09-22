@@ -1,16 +1,14 @@
 package com.up.math.number;
 
-import java.util.function.Supplier;
-
-public abstract class BigFixed<T extends BigFixed<T>> implements Comparable<T>, Cloneable {
+public abstract class BigFixed<T extends BigFixed<T>> implements Cloneable, Real<T> {
     
     abstract public boolean sign();
     
     abstract T expand();
 
-    abstract T lshBF(int amount);
+    public abstract T lshBits(int amount);
 
-    abstract T rshBF(int amount);
+    public abstract T rshBits(int amount);
 
     abstract public T lshParts(int amount);
 
@@ -66,9 +64,9 @@ public abstract class BigFixed<T extends BigFixed<T>> implements Comparable<T>, 
             } 
         } else {
             if (y0 > 0) {
-                return x.pi().rshBF(1);
+                return x.pi().rshBits(1);
             } else if (y0 < 0) {
-                return x.pi().rshBF(1).negate();
+                return x.pi().rshBits(1).negate();
             } else {
                 return null;
             }
@@ -83,26 +81,26 @@ public abstract class BigFixed<T extends BigFixed<T>> implements Comparable<T>, 
 
     abstract public double toDouble();
     
-//    abstract public T fromDouble(double d);
+//    abstract public T fromDouble(double f);
 //    
 //    abstract public T fromInt(int i);
     
-    public static <T extends BigFixed<T>> T fromInt(int i, Class<T> type) {
-        if (type == IntFixed.class) {
-            return (T)IntFixed.fromInt(i);
-        } else if (type == ShortFixed.class) {
-            return (T)ShortFixed.fromInt(i);
-        }
-        return null;
-    }
-    
-    public static <T extends BigFixed<T>> T fromDouble(double d, Class<T> type) {
-        if (type == IntFixed.class) {
-            return (T)IntFixed.fromDouble(d);
-        } else if (type == ShortFixed.class) {
-            return (T)ShortFixed.fromDouble(d);
-        }
-        return null;
-    }
+//    public static <T extends BigFixed<T>> T fromInt(int i, Class<T> type) {
+//        if (type == IntFixed.class) {
+//            return (T)IntFixed.fromInt(i);
+//        } else if (type == ShortFixed.class) {
+//            return (T)ShortFixed.fromInt(i);
+//        }
+//        return null;
+//    }
+//    
+//    public static <T extends BigFixed<T>> T fromDouble(double f, Class<T> type) {
+//        if (type == IntFixed.class) {
+//            return (T)IntFixed.fromDouble(f);
+//        } else if (type == ShortFixed.class) {
+//            return (T)ShortFixed.fromDouble(f);
+//        }
+//        return null;
+//    }
     
 }

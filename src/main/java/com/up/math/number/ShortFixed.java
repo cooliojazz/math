@@ -1,7 +1,5 @@
 package com.up.math.number;
 
-import java.util.function.Function;
-
 /**
  * Represents an 16.X fixed point number
  * @author Ricky
@@ -10,11 +8,11 @@ public class ShortFixed extends BigFixed<ShortFixed> {
     // TODO: Rework this into a record class with everything properly immutable, especially since most methods are essentially written that way already.
     //       Actually, just make it follow IntFixed's ways
     final static int FIXED_MAX = 10;
-    
+
     // While still mutable
     public static ShortFixed PI() {return ShortFixed.fromBitString(" 0000000000000011.001001000011111101101010100010001000010110100011000010001101001100010011000110011000101000101110000000110111000001110011010001001010010000001001");}
 //    public static final ShortFixed PI = ShortFixed.fromBitString(" 0000000000000011.001001000011111101101010100010001000010110100011000010001101001100010011000110011000101000101110000000110111000001110011010001001010010000001001");
-    
+
     int size = 1;
     boolean sign = false;
     short[] parts = new short[FIXED_MAX];
@@ -29,21 +27,45 @@ public class ShortFixed extends BigFixed<ShortFixed> {
 		this.parts = parts;
 	}
     
+    public ShortFixed(double d) {
+        ShortFixed temp = fromDouble(d);
+        this.sign = temp.sign;
+        this.size = temp.size;
+        this.parts = temp.parts;
+        this.overflow = temp.overflow;
+    }
+
     @Override
     public ShortFixed zero() {
         return ShortFixed.fromInt(0);
     }
-    
+
     @Override
     public ShortFixed one() {
         return ShortFixed.fromInt(1);
     }
-    
+
+    @Override
+    public ShortFixed two() {
+        return ShortFixed.fromInt(1);
+    }
+
     @Override
     public ShortFixed pi() {
         return PI();
     }
-    
+
+    @Override
+    public ShortFixed e() {
+        // TODO: Add accurate constants
+        return fromDouble(Math.E);
+    }
+
+    @Override
+    public ShortFixed sqrt2() {
+        return fromDouble(Math.sqrt(2));
+    }
+
     @Override
     public boolean sign() {
         return sign;
@@ -59,7 +81,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         return ans;
     }
 
-    ShortFixed lshBF(int amount) {
+    public ShortFixed lshBits(int amount) {
         ShortFixed ans = clone();
         for (int i = 0; i < amount; i++) {
             for (int j = 0; j < ans.size; j++) {
@@ -70,7 +92,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         return ans.reduce();
     }
 
-    ShortFixed rshBF(int amount) {
+    public ShortFixed rshBits(int amount) {
         ShortFixed ans = clone();
         for (int i = 0; i < amount; i++) {
 			ans = ans.expand();
@@ -106,13 +128,13 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         }
         return ans;
     }
-    
+
     public ShortFixed abs() {
         ShortFixed ans = clone();
         ans.sign = false;
         return ans;
     }
-    
+
     public ShortFixed reduce() {
         ShortFixed ans = clone();
         boolean empty = true;
@@ -139,8 +161,8 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         ans.parts[3] = (short)((raw & 0xFFFF0l) >> 4);
         ans.parts[4] = (short)(raw & 0xF);
         // Then shift for days
-        if (exponent < 0) ans = ans.rshBF(-exponent);
-        if (exponent > 0) ans = ans.lshBF(exponent);
+        if (exponent < 0) ans = ans.rshBits(-exponent);
+        if (exponent > 0) ans = ans.lshBits(exponent);
         return ans.reduce();
     }
 
@@ -200,7 +222,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
 //        ans.sign = carry > 1 ? !ans.sign : ans.sign;
         return ans.reduce();
     }
-	
+
     public ShortFixed sub(ShortFixed b) {
         ShortFixed a = clone();
 		if (a.sign != b.sign) return add(b.negate());
@@ -228,38 +250,32 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         return ans.reduce();
     }
 
+    // TODO: Not sure if this is working right yet?
     public ShortFixed mult(ShortFixed b) {
-        ShortFixed a = clone();
-        ShortFixed ans = new ShortFixed();
-        ans.size = Math.min(FIXED_MAX, a.size + b.size - 1); // (size - 1 + (b.size - 1)) + 1;
-		ans.overflow = a.overflow || b.overflow;
-        for (int i = a.size - 1; i >= 0; i--) {
-			ShortFixed temp = new ShortFixed();
-			temp.size = Math.min(FIXED_MAX, b.size + 1);
+        int nSize = Math.min(FIXED_MAX, size + b.size - 1); // (size - 1 + (b.size - 1)) + 1;
+        short[] nParts = new short[FIXED_MAX];
+		boolean nOverflow = overflow || b.overflow;
+        for (int i = size - 1; i >= 0; i--) {
 			int carry = 0;
-			for (int j = Math.min(FIXED_MAX - 2, b.size - 1); j >= 0; j--) {
-				int part = carry;
-				part += (a.parts[i] & 0xFFFF) * (b.parts[j] & 0xFFFF);
+			for (int j = b.size - 1; j >= 0; j--) {
+                int pos = i + j;
+                int part = carry;
+                part += (parts[i] & 0xFFFF) * (b.parts[j] & 0xFFFF);
+                if (pos < nSize) {
+                    part += nParts[pos] & 0xFFFF;
+                    nParts[pos] = (short)(part & 0xFFFF);
+                }
 				carry = part >>> 16;
-				temp.parts[j + 1] = (short)(part & 0xFFFF);
-			}
-			temp.parts[0] = (short)(carry & 0xFFFF);
-			int shift = i - 1;
-			if (carry > 0 && shift < 0) {
-//				System.out.println("Multiplication overflow");
-				ans.overflow = true;
-			}
-			if (shift < 0) {
-				ans = ans.add(temp.lshParts(-shift));
-			} else if (shift > 0) {
-				ans = ans.add(temp.rshParts(shift));
-			} else {
-				ans = ans.add(temp);
-			}
-			
+            }
+            if (i > 0) {
+                nParts[i - 1] = (short)(carry & 0xFFFF + nParts[i - 1] & 0xFFFF);
+            } else if (carry > 0) {
+                nOverflow = true;
+            }
 		}
-		ans.sign = a.sign ^ b.sign;
-        return ans.reduce();
+        return new ShortFixed(sign ^ b.sign, nSize, nParts).reduce();
+        // TODO: Missing overflow param in construct
+//        return new ShortFixed(sign ^ b.sign, nSize, nParts, nOverflow).reduce();
     }
 
     public ShortFixed div(ShortFixed b) {
@@ -270,7 +286,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         ans.size = 2;
         int pos = -1;
         while (rem.compareTo(div) > 0 && pos > -15) {
-            div = div.lshBF(1);
+            div = div.lshBits(1);
             pos--;
         }
         while (!rem.equals(new ShortFixed()) && pos < (FIXED_MAX -1) * 16) {
@@ -280,13 +296,13 @@ public class ShortFixed extends BigFixed<ShortFixed> {
                 ans.parts[tpos / 16] |= 1 << (15 - (tpos % 16));
                 if (tpos >= ans.size * 16) ans.size++;
             }
-            div = div.rshBF(1);
+            div = div.rshBits(1);
             pos++;
         }
         ans.sign = sign ^ b.sign;
         return ans.reduce();
     }
-    
+
     /**
      * Fairly limited by the 16-bit integral part of the number
      */
@@ -303,14 +319,14 @@ public class ShortFixed extends BigFixed<ShortFixed> {
 //            }
 //        }
 //        return new ShortFixed(sign, 2, new short[] {(short)revF, (short)revI});
-        
+
         ShortFixed div = this;
         ShortFixed rem = fromInt(1);
         ShortFixed ans = new ShortFixed();
         ans.size = 2;
         int pos = -1;
         while (rem.compareTo(div) > 0 && pos > -15) {
-            div = div.lshBF(1);
+            div = div.lshBits(1);
             pos--;
         }
         while (!rem.equals(new ShortFixed()) && pos < (FIXED_MAX -1) * 16) {
@@ -319,26 +335,26 @@ public class ShortFixed extends BigFixed<ShortFixed> {
                 ans.parts[(pos + 16) / 16] |= 1 << (15 - ((pos + 16) % 16));
                 if (pos >= ans.size * 16) ans.size++;
             }
-            div = div.rshBF(1);
+            div = div.rshBits(1);
             pos++;
         }
         return ans;
     }
 
-    
+
     public ShortFixed sqrt() {
         ShortFixed val = this;
         // TODO: Replace arbitrary precision with some form of convergence testing?
         for (int i = 0; i < 8; i++) {
-            val = ShortFixed.fromDouble(0.5).mult(val.add(this.div(val)));
+            val = fromDouble(0.5).mult(val.add(this.div(val)));
         }
         return val;
     }
-    
+
     public ShortFixed square() {
         return mult(this);
     }
-    
+
     public ShortFixed pow(int p) {
         ShortFixed ans = this;
         for (int i = 1; i < p; i++) {
@@ -346,7 +362,16 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         }
         return ans;
     }
-    
+
+    public ShortFixed pow(ShortFixed p) {
+//        ShortFixed ans = this;
+//        for (int i = 1; i < p; i++) {
+//            ans = ans.mult(this);
+//        }
+//        return ans;
+        return null;
+    }
+
     /**
      * A poor approximation of sin
      * @return
@@ -363,7 +388,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
                   .add(val.pow(5).div(fromInt(120)))
                   .sub(val.pow(7).div(fromInt(5040)));
     }
-    
+
     /**
      * A poor approximation of sinh
      * @return
@@ -374,7 +399,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
                   .add(val.pow(5).div(fromInt(120)))
                   .add(val.pow(7).div(fromInt(5040)));
     }
-    
+
     /**
      * A poor approximation of cosh
      * @return
@@ -385,7 +410,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
                   .add(val.pow(4).div(fromInt(24)))
                   .add(val.pow(6).div(fromInt(720)));
     }
-    
+
     /**
      * Uses the poor approximation of sin
      * @return
@@ -393,7 +418,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
     public ShortFixed cos() {
         return add(PI().div(fromInt(2))).sin();
     }
-    
+
     /**
      * A poor approximation of atan
      * @return
@@ -401,7 +426,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
     public ShortFixed atan() {
         return sub(pow(3).div(fromInt(3))).add(pow(5).div(fromInt(5))).sub(pow(7).div(fromInt(7)));
     }
-    
+
     public static ShortFixed atan2(ShortFixed x, ShortFixed y) {
         int x0 = x.compareTo(new ShortFixed());
         int y0 = y.compareTo(new ShortFixed());
@@ -415,21 +440,32 @@ public class ShortFixed extends BigFixed<ShortFixed> {
             } 
         } else {
             if (y0 > 0) {
-                return PI().rshBF(1);
+                return PI().rshBits(1);
             } else if (y0 < 0) {
-                return PI().rshBF(1).negate();
+                return PI().rshBits(1).negate();
             } else {
                 return null;
             }
         }
     }
+    
     @Override
     public ShortFixed exp2() {
         return null;
     }
     
     @Override
+    public ShortFixed exp() {
+        return null;
+    }
+
+    @Override
     public ShortFixed log2() {
+        return null;
+    }
+
+    @Override
+    public ShortFixed log() {
         return null;
     }
 
@@ -447,9 +483,9 @@ public class ShortFixed extends BigFixed<ShortFixed> {
 		int shift = 15 - firstOne;
 		ShortFixed shifted;
 		if (shift > 0) {
-			shifted = rshBF(shift);
+			shifted = rshBits(shift);
 		} else if (shift < 0) {
-			shifted = lshBF(-shift);
+			shifted = lshBits(-shift);
 		} else {
 			shifted = clone();
 		}
@@ -473,7 +509,7 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         }
         return result + (overflow ? " overflowed" : "");
     }
-    
+
     @Override
     public ShortFixed clone() {
         ShortFixed ans = new ShortFixed();
@@ -489,10 +525,10 @@ public class ShortFixed extends BigFixed<ShortFixed> {
         // this < o == -, this > o == +
 		if (overflow && !o.overflow) return sign ? -1 : 1;
 		if (!overflow && o.overflow) return o.sign ? -1 : 1;
-        
+
         if (!sign && o.sign) return 1;
         if (sign && !o.sign) return -1;
-        
+
         int comp = 0;
 		if (!overflow && !o.overflow) {
 			for (int i = 0; i < Math.max(size, o.size); i++) {

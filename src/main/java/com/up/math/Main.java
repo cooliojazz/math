@@ -2,7 +2,10 @@ package com.up.math;
 
 import com.up.math.matrix.Matrix3;
 import com.up.math.number.Complex;
+import com.up.math.number.DoubleReal;
+import com.up.math.number.NeoComplex;
 import com.up.math.vector.Point2;
+import com.up.math.vector.Point2Double;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -41,7 +44,8 @@ public class Main {
                 }
             });
         f.setSize(1000, 800);
-        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100)));
+//        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100)));
+        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100000)));
 //        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.08350828339576327, -0.0015708583190908029), new Complex(4, 2), 100)));
         f.setVisible(true);
     }
@@ -77,7 +81,7 @@ public class Main {
         
         private Point2 last = new Point2(0, 0);
         
-        private final int threads = 4;
+        private final int threads = 6;
         private boolean pause = false;
         private boolean ui = true;
         private boolean recording = true;
@@ -190,7 +194,8 @@ public class Main {
                 long time = System.nanoTime();
                 Graphics2D g = buffer.createGraphics();
                 Point2 p = new Point2(Math.random() * 2 - 1, Math.random() * 2 - 1);
-                int esc = fractalCheck(worldMatrix().apply(p).asComplex(), new Complex(0.25, -0.5), factor, bound);
+//                int esc = fractalCheck(worldMatrix().apply(p).asComplex(), new Complex(0.25, -0.5), factor, bound);
+                int esc = fractalCheck(new Complex(0, 0), worldMatrix().apply(p).asComplex(), factor, bound);
 //                synchronized (buffer) {
                     if (esc < maxEscape) {
                         Color c = grad.get(Math.log10(esc) % 1);
@@ -294,6 +299,7 @@ public class Main {
         int i;
         for (i = 0; i < maxEscape && z.magnitude() < bound; i++) {
             z = z.pow(exp).add(c);
+//            z = z.multiply(z).add(c);
         }
         return i;
     }

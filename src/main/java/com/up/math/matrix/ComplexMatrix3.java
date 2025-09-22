@@ -24,7 +24,7 @@ public record ComplexMatrix3(Complex a, Complex b, Complex c,
     }
 
 //    public ComplexMatrix3 multiply(ComplexMatrix3 m) {
-//        return new ComplexMatrix3(a * m.a, b * m.b, c * m.c, d * m.d, e * m.e, f * m.f, g * m.g, h * m.h, i * m.i);
+//        return new ComplexMatrix3(a * m.a, b * m.b, c * m.c, f * m.f, e * m.e, f * m.f, g * m.g, h * m.h, i * m.i);
 //    }
 
     public ComplexMatrix3 multiply(Complex s) {
@@ -32,17 +32,17 @@ public record ComplexMatrix3(Complex a, Complex b, Complex c,
     }
 
 //    public ComplexMatrix3 compose(ComplexMatrix3 m) {
-//        return new ComplexMatrix3(m.a * a + m.d * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
-//                           m.a * d + m.d * e + m.g * f, m.b * d + m.e * e + m.h * f, m.c * d + m.f * e + m.i * f,
-//                           m.a * g + m.d * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
+//        return new ComplexMatrix3(m.a * a + m.f * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
+//                           m.a * f + m.f * e + m.g * f, m.b * f + m.e * e + m.h * f, m.c * f + m.f * e + m.i * f,
+//                           m.a * g + m.f * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
 //    }
 //
 //    public Point3 apply(Point3 p) {
-//        return new Point3(p.x() * a + p.y() * b + p.z() * c, p.x() * d + p.y() * e + p.z() * f, p.x() * g + p.y() * h + p.z() * i);
+//        return new Point3(p.x() * a + p.y() * b + p.z() * c, p.x() * f + p.y() * e + p.z() * f, p.x() * g + p.y() * h + p.z() * i);
 //    }
 //
 //    public Point2 apply(Point2D p) {
-//        return new Point2(p.getX() * a + p.getY() * b + c, p.getX() * d + p.getY() * e + f);
+//        return new Point2(p.getX() * a + p.getY() * b + c, p.getX() * f + p.getY() * e + f);
 //    }
 
     public ComplexMatrix2 linearMap() {
