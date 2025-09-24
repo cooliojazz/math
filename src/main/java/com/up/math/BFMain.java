@@ -20,7 +20,7 @@ public class BFMain {
     // new Complex(2)
 
     public static void main(String[] args) {
-//        System.out.println(IntFixed.ZERO.fromDouble(4.6).exp2());
+////        System.out.println(IntFixed.ZERO.fromDouble(4.6).exp2());
 ////        System.out.println(IntFixed.ZERO.fromDouble(0.125).log2());
 ////        System.out.println(IntFixed.ZERO.fromDouble(0.25).log2());
 ////        System.out.println(IntFixed.ZERO.fromDouble(0.5).log2());
@@ -33,6 +33,8 @@ public class BFMain {
 ////        System.out.println(IntFixed.ZERO.fromDouble(3).pow(IntFixed.ZERO.fromDouble(2.5)));
 ////        System.out.println(IntFixed.exp2(-1000));
 ////        System.out.println(IntFixed.TWO.powNew(IntFixed.ZERO.fromDouble(2.5)));
+//        System.out.println(new NeoComplex<>(IntFixed.E).pow(new NeoComplex<>(IntFixed.ZERO, IntFixed.PI)));
+////        System.out.println(IntFixed.E.pow(IntFixed.PI));
 //        if (true) return;
         
         Frame f = new Frame("Fractals");
@@ -46,8 +48,9 @@ public class BFMain {
 //        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100)));
 //        f.add(new StochasticFractalDrawer<>(new FractalParameters(1.4, new Point2(-0.32467038152740657, -0.32267018065619124), new Complex(2, 0), 100), DoubleReal.class));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-0.32467038152740657, -0.32267018065619124), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
-        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-1.765912092029173, 0.04135655056468296), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
+//        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-1.765912092029173, 0.04135655056468296), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(1.4), new NeoPoint2<>(IntFixed.fromDouble(-0.32467038152740657), IntFixed.fromDouble(-0.32267018065619124)), new NeoComplex<>(IntFixed.fromInt(2))), IntFixed.ZERO, BFMain::drawFractal));
+        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(1.4), new NeoPoint2<>(IntFixed.fromHexString("-00000001.41e573611c9e57ee"), IntFixed.fromHexString("-00000000.68ccdcd44e3a9f56")), new NeoComplex<>(IntFixed.fromInt(2))), IntFixed.ZERO, BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(ShortFixed.PI().fromDouble(1.4), new NeoPoint2<>(ShortFixed.PI().fromDouble(-0.32467038152740657), ShortFixed.PI().fromDouble(-0.32267018065619124)), new NeoComplex<>(ShortFixed.fromInt(2))), ShortFixed.PI(), BFMain::drawFractal));
         f.setVisible(true);
     }
@@ -82,32 +85,38 @@ public class BFMain {
 //                    Point2Double p = new Point2Double(Math.random() * 2 - 1, Math.random() * 2 - 1);
                     NeoPoint2<T> p = new NeoPoint2<>(Real.fromDouble(t, Math.random() * 2 - 1), Real.fromDouble(t, Math.random() * 2 - 1));
                     NeoComplex<T> wp = drawer.worldMatrix().apply(p).asComplex();
-                    double esc = fractalCheck(new NeoComplex<>(t.zero()), wp, drawer.factor(), Real.fromDouble(t, 10000));
+                    double esc = fractalCheck(new NeoComplex<>(t.zero()), wp, drawer.factor(), Real.fromDouble(t, 100));
 //                    System.out.println("polar times");
 //                    System.out.println(NeoComplex.pTime / 1000 / 1000d);
 //                    System.out.println(NeoComplex.tTime / 1000 / 1000d);
 //                    System.out.println(NeoComplex.cTime / 1000 / 1000d);
-//                    double esc = Math.abs(wp.pow((T)IntFixed.TWO).magnitude().toDouble() - new Complex(wp.imag().toDouble(), wp.real().toDouble()).pow(2).magnitude()) * 10;
+//                    double esc = Math.abs(wp.pow((T)IntFixed.TWO).magnitude().toDouble() - new Complex(wp.imag().toDouble(), wp.real().toDouble()).pow(2).magnitude()) * 10000;
 //                    double esc = Math.abs(wp.pow(new NeoComplex<>((T)IntFixed.TWO)).magnitude().toDouble() - new Complex(wp.imag().toDouble(), wp.real().toDouble()).pow(2).magnitude()) * 10;
-//                    double esc = Math.abs(Real.atan2(wp.real(), wp.imag()).toDouble() - Math.atan2(wp.imag().toDouble(), wp.real().toDouble())) * 100000;
+//                    double esc = Math.abs(wp.real().pow(wp.imag()).toDouble() - Math.pow(wp.real().toDouble(), wp.imag().toDouble())) * 10000;
+//                    double esc = Math.abs(Real.atan2(wp.real(), wp.imag()).toDouble() - Math.atan2(wp.imag().toDouble(), wp.real().toDouble())) * 10000;
+//                    double esc = Math.abs(wp.imag().toDouble() / wp.real().toDouble()) * 1;
+//                    double esc = (wp.real().sqrt().toDouble() - Math.sqrt(wp.real().toDouble())) * 10000;
 //                    double esc = wp.real().abs().toDouble() < 1 ? Math.abs(wp.real().atan().toDouble() - Math.atan(wp.real().toDouble())) : -1;
-//                    double esc = Math.abs(wp.real().sinh().toDouble() - Math.sinh(wp.real().toDouble())) * 10000;
-//                    double esc = Math.abs(((BigFixed)wp.real()).exp2().toDouble() - Math.exp(wp.real().toDouble() * Math.log(2))) * 1000000;
+//                    double esc = Math.abs(wp.real().sinh().toDouble() - Math.sinh(wp.real().toDouble())) * 1000000;
+//                    double esc = Math.abs(((BigFixed)wp.real()).exp2().toDouble() - Math.exp(wp.real().toDouble() * Math.log(2))) * 10000;
 //                    double esc = (int)((wp.real().toDouble() * wp.imag().toDouble() - wp.real().mult(wp.imag()).toDouble()) * 1e12);
 //                    double esc = wp.multiply(wp).subtract(wp.pow(new NeoComplex<>((T)new DoubleReal(2)))).magnitude().toDouble();
 //                    double esc = wp.pow((T)new DoubleReal(2)).subtract(wp.multiply(wp)).magnitude().toDouble();
 //                    double esc = wp.pow((T)new DoubleReal(2)).subtract(wp.pow(new NeoComplex<>((T)new DoubleReal(2)))).magnitude().toDouble();
                     
-                    if (esc < maxEscape) {
-                        Color c = grad.get(Math.log10(esc) % 1);
+                    Color c;
+                    if (esc == 0) c = Color.green;
+                    else if (Double.isInfinite(esc)) c = Color.yellow;
+                    else if (Double.isNaN(esc)) c = Color.red;
+                    else if (esc < maxEscape) {
+                        c = grad.get(Math.log10(esc) % 1);
+//                        for (int i = 0; i < Math.log10(esc); i++) c = c.darker();
 //                        Color c = grad.get((esc * 1) % 1);
-//                        if (esc == 0) c = Color.green;
-//                        if (Double.isInfinite(esc)) c = Color.yellow;
-//                        if (Double.isNaN(esc)) c = Color.red;
-                        g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 63));
                     } else {
-                        g.setColor(Color.black);
+                        c = Color.black;
                     }
+                    g.setColor(new Color(c.getRed(), c.getGreen(), c.getBlue(), 63));
+                    
                     NeoPoint2<DoubleReal> sp = drawer.screenMatrix().apply(new Point2Double(p.x().toDouble(), p.y().toDouble()));
                     g.fillOval((int)Math.round(sp.x().d() - (drawer.pointSize - 1) / 2d), (int)Math.round(sp.y().d() - (drawer.pointSize - 1) / 2d), (int)drawer.pointSize, (int)drawer.pointSize);
                     drawer.mspd = drawer.mspd * 0.999 + (System.nanoTime() - time) / 1000000d * 0.001;
@@ -164,7 +173,7 @@ public class BFMain {
 //        }
 //    }
 
-    private static int maxEscape = 10000;
+    private static int maxEscape = 100;
 
     /**
      * Ignores exp for now since most Reals are missing pow
@@ -179,7 +188,7 @@ public class BFMain {
             z = z.pow(exp).add(c);
         }
 //        double partial = 0;
-        double partial = 1 - Math.log(Math.log(z.magnitude().toDouble()) / Math.log(2)) / Math.log(exp.magnitude().toDouble());
+        double partial = z.magnitude().toDouble() > 1 ? 1 - Math.log(Math.log(z.magnitude().toDouble()) / Math.log(2)) / Math.log(exp.magnitude().toDouble()) : 0;
         return i + partial;
 //        return i;
     }

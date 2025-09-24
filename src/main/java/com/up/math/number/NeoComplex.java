@@ -116,7 +116,9 @@ public record NeoComplex<T extends Real<T>>(T real, T imag) {
      */
     public NeoComplex<T> pow(NeoComplex<T> c) {
         NeoComplex<T> theta = c.multiply(azimuth());
-        return NeoComplex.pow(magnitude(), c).multiply(theta.cos().add(theta.sin().multiply(new NeoComplex<>(c.real.zero(), c.real.one())))).conjugate();
+        return NeoComplex.pow(magnitude(), c)
+                         .multiply(theta.cos().add(theta.sin().multiply(new NeoComplex<>(c.real.zero(), c.real.one()))))
+                         .conjugate();
         // TODO: Why is this conjugate now? And why did i have to switch the polar real sign? something feels fishy...
     }
     
