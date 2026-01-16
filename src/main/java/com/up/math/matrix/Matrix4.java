@@ -1,5 +1,8 @@
 package com.up.math.matrix;
 
+import com.up.math.vector.Point3;
+import com.up.math.vector.Point4;
+
 public record Matrix4(double a, double b, double c, double d,
                       double e, double f, double g, double h,
                       double i, double j, double k, double l,
@@ -39,16 +42,17 @@ public record Matrix4(double a, double b, double c, double d,
     public Matrix4 multiply(double s) {
         return new Matrix4(a * s, b * s, c * s, d * s, e * s, f * s, g * s, h * s, i * s, j * s, k * s, l * s, m * s, n * s, o * s, p * s);
     }
-//
-//    public Matrix4 compose(Matrix4 m) {
-//        return new Matrix4(m.a * a + m.d * b + m.g * c, m.b * a + m.e * b + m.h * c, m.c * a + m.f * b + m.i * c,
-//                           m.a * d + m.d * e + m.g * f, m.b * d + m.e * e + m.h * f, m.c * d + m.f * e + m.i * f,
-//                           m.a * g + m.d * h + m.g * i, m.b * g + m.e * h + m.h * i, m.c * g + m.f * h + m.i * i);
-//    }
 
-//    public Point2 apply(Point4 p) {
-//        return new Point4(p.getX() * a + p.getY() * b + c, p.getX() * d + p.getY() * e + f);
-//    }
+    public Matrix4 compose(Matrix4 m4) {
+        return new Matrix4(m4.a * a + m4.e * b + m4.i * c + m4.m * d, m4.b * a + m4.f * b + m4.j * c + m4.n * d, m4.c * a + m4.g * b + m4.k * c + m4.o * d, m4.d * a + m4.h * b + m4.l * c + m4.p * d,
+                           m4.a * e + m4.e * f + m4.i * g + m4.m * h, m4.b * e + m4.f * f + m4.j * g + m4.n * h, m4.c * e + m4.g * f + m4.k * g + m4.o * h, m4.d * e + m4.h * f + m4.l * g + m4.p * h,
+                           m4.a * i + m4.e * j + m4.i * k + m4.m * l, m4.b * i + m4.f * j + m4.j * k + m4.n * l, m4.c * i + m4.g * j + m4.k * k + m4.o * l, m4.d * i + m4.h * j + m4.l * k + m4.p * l,
+                           m4.a * m + m4.e * n + m4.i * o + m4.m * p, m4.b * m + m4.f * n + m4.j * o + m4.n * p, m4.c * m + m4.g * n + m4.k * o + m4.o * p, m4.d * m + m4.h * n + m4.l * o + m4.p * p);
+    }
+
+    public Point4 apply(Point4 p4) {
+        return new Point4(p4.x() * a + p4.y() * b + p4.z() * c + p4.w() * d, p4.x() * e + p4.y() * f + p4.z() * g + p4.w() * h, p4.x() * i + p4.y() * j + p4.z() * k + p4.w() * l, p4.x() * m + p4.y() * n + p4.z() * o + p4.w() * p);
+    }
 
     public static Matrix4 identity() {
         return new Matrix4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -73,10 +77,10 @@ public record Matrix4(double a, double b, double c, double d,
 //    public static Matrix4 offset(double x, double y) {
 //        return new Matrix4(1, 0, x, 0, 1, y, 0, 0, 1);
 //    }
-//
-//    public static Matrix4 offset(Point2 p) {
-//        return new Matrix4(1, 0, p.x, 0, 1, p.y, 0, 0, 1);
-//    }
+
+    public static Matrix4 offset(Point3 p) {
+        return new Matrix4(1, 0, 0, p.x(), 0, 1, 0, p.y(), 0, 0, 1, p.z(), 0, 0, 0, 1);
+    }
 //
 //    public static Matrix4 rotate(double a) {
 //        return new Matrix4(Math.cos(a), -Math.sin(a), 0, Math.sin(a), Math.cos(a), 0, 0, 0, 1);

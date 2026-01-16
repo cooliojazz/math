@@ -1,6 +1,6 @@
 package com.up.math.number;
 
-public abstract class BigFixed<T extends BigFixed<T>> implements Cloneable, Real<T> {
+public abstract class BigFixed<T extends BigFixed<T, P>, P extends Precision> implements Cloneable, Real<T> {
     
     abstract public boolean sign();
     
@@ -51,7 +51,7 @@ public abstract class BigFixed<T extends BigFixed<T>> implements Cloneable, Real
     abstract public T exp2();
     abstract public T log2();
 
-    public static <T extends BigFixed<T>> T atan2(T x, T y) {
+    public static <T extends BigFixed<T, P>, P extends Precision> T atan2(T x, T y) {
         int x0 = x.compareTo(x.zero());
         int y0 = y.compareTo(x.zero());
         if (x0 > 0) {

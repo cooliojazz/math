@@ -1,5 +1,6 @@
 package com.up.math.shape;
 
+import com.up.math.matrix.AffineMatrix2;
 import com.up.math.matrix.Matrix3;
 import com.up.math.vector.Point2;
 
@@ -42,7 +43,7 @@ public record Rectangle2(Point2 start, Point2 end) {
         return new Rectangle2(new Point2(Math.min(start.x, rect.start.x), Math.min(start.y, rect.start.y)), new Point2(Math.max(end.x, rect.end.x), Math.max(end.y, rect.end.y)));
     }
 
-    public Rectangle2 transformAndAlign(Matrix3 mat) {
+    public Rectangle2 transformAndAlign(AffineMatrix2 mat) {
         Point2 c1 = mat.apply(start);
         Point2 c2 = mat.apply(new Point2(start.x, end.y));
         Point2 c3 = mat.apply(end);

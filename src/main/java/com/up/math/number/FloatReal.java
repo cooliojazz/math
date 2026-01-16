@@ -105,6 +105,21 @@ public record FloatReal(float f) implements Real<FloatReal> {
         return new FloatReal((float)Math.log(f));
     }
     
+    @Override
+    public FloatReal mod(FloatReal n) {
+        return new FloatReal(f % n.f);
+    }
+    
+    @Override
+    public FloatReal floor() {
+        return new FloatReal((float)Math.floor(f));
+    }
+    
+    @Override
+    public FloatReal ceil() {
+        return new FloatReal((float)Math.ceil(f));
+    }
+    
     // TODO: Should replace these with constants
     @Override
     public FloatReal zero() {

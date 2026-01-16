@@ -1,6 +1,7 @@
 package com.up.math.matrix;
 
 import com.up.math.number.BigFixed;
+import com.up.math.number.Precision;
 import com.up.math.number.Real;
 import com.up.math.number.NeoComplex;
 import com.up.math.vector.NeoPoint2;
@@ -79,7 +80,7 @@ public record NeoMatrix2<T extends Real<T>>(T a, T b,
 //        return new Complex[] {s.mult(0.5).add(inner), s.mult(0.5).subtract(inner)};
 //    }
 
-    public static <T extends BigFixed<T>> NeoMatrix2<T> identity(Supplier<T> ts) {
+    public static <T extends BigFixed<T, P>, P extends Precision> NeoMatrix2<T> identity(Supplier<T> ts) {
         T z = ts.get();
         return new NeoMatrix2<>(z.one(), z, z, z.one());
     }

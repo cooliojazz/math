@@ -1,11 +1,8 @@
-package com.up.math;
+package com.up.math.examples;
 
-import com.up.math.matrix.Matrix3;
+import com.up.math.matrix.AffineMatrix2;
 import com.up.math.number.Complex;
-import com.up.math.number.DoubleReal;
-import com.up.math.number.NeoComplex;
 import com.up.math.vector.Point2;
-import com.up.math.vector.Point2Double;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -73,9 +70,9 @@ public class Main {
         private BufferedImage buffer = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         double pointSize = 6;
         
-        private Matrix3 screen = Matrix3.identity();
-        private Matrix3 zoom;
-        private Matrix3 offset;
+        private AffineMatrix2 screen = AffineMatrix2.identity();
+        private AffineMatrix2 zoom;
+        private AffineMatrix2 offset;
         private Complex factor;
         private double bound;
         
@@ -87,8 +84,8 @@ public class Main {
         private boolean recording = true;
         
         public StochasticFractalDrawer(FractalParameters params) {
-            zoom = Matrix3.scale(params.zoom);
-            offset = Matrix3.offset(params.offset);
+            zoom = AffineMatrix2.scale(params.zoom);
+            offset = AffineMatrix2.offset(params.offset);
             factor = params.factor;
             bound = params.bound;
             
@@ -103,17 +100,17 @@ public class Main {
                     public void mouseDragged(MouseEvent e) {
                         Point2 p = new Point2(e.getPoint());
                         Point2 ptl = worldMatrix().linearMap().apply(screen.inverse().linearMap().apply(p.to(last)));
-                        offset = Matrix3.offset(ptl).compose(offset);
-                        reuseCanvas(Matrix3.offset(last.to(p)));
+                        offset = AffineMatrix2.offset(ptl).compose(offset);
+                        reuseCanvas(AffineMatrix2.offset(last.to(p)));
                         last = p;
                     }
                 });
             addMouseWheelListener(e -> {
                 double speed = e.isShiftDown() ? 1.1 : 2;
-                Matrix3 ds = Matrix3.scale(Math.pow(speed, e.getPreciseWheelRotation()));
-                    zoom = ds.compose(zoom);
-                    reuseCanvas(ds.inverse());
-                });
+                AffineMatrix2 ds = AffineMatrix2.scale(Math.pow(speed, e.getPreciseWheelRotation()));
+                        zoom = ds.compose(zoom);
+                        reuseCanvas(ds.inverse());
+                    });
             addKeyListener(new KeyAdapter() {
                 @Override
                 public void keyTyped(KeyEvent e) {
@@ -180,7 +177,7 @@ public class Main {
 //                }).start();
         }
         
-        private Matrix3 worldMatrix() {
+        private AffineMatrix2 worldMatrix() {
             return offset.compose(zoom);
         }
         
@@ -221,8 +218,8 @@ public class Main {
             repaint();
         }
         
-        private void reuseCanvas(Matrix3 m) {
-            Matrix3 mm = Matrix3.offset(getWidth() / 2d, getHeight() / 2d).compose(m.compose(Matrix3.offset(-getWidth() / 2d, -getHeight() / 2d)));
+        private void reuseCanvas(AffineMatrix2 m) {
+            AffineMatrix2 mm = AffineMatrix2.offset(getWidth() / 2d, getHeight() / 2d).compose(m.compose(AffineMatrix2.offset(-getWidth() / 2d, -getHeight() / 2d)));
             Point2 tp = mm.apply(new Point2(0, 0));
             Point2 te = mm.apply(new Point2(getWidth(), getHeight()));
             BufferedImage back = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
@@ -246,7 +243,7 @@ public class Main {
             
             if (ui) {
                 fg.setColor(Color.magenta);
-                Matrix3 worldToScreen = screen.compose(worldMatrix().inverse());
+                AffineMatrix2 worldToScreen = screen.compose(worldMatrix().inverse());
                 Point2 lb = worldToScreen.apply(new Point2(-1, -1));
                 Point2 ub = worldToScreen.apply(new Point2(1, 1));
                 int size = (int)(lb.to(ub).length() / 25);
@@ -254,7 +251,7 @@ public class Main {
                 fg.drawOval((int)Math.round(ub.getX()), (int)Math.round(ub.getY()), size, size);
                 
                 fg.setColor(Color.white);
-                drawOutlineString(fg, "Offset: (" + offset.c() + ", " + offset.f() + ")", 5, 15);
+                drawOutlineString(fg, "Offset: (" + offset.x() + ", " + offset.y() + ")", 5, 15);
                 drawOutlineString(fg, "Factor: " + factor, 5, 30);
                 drawOutlineString(fg, "Zoom: " + zoom.a(), 5, 45);
                 drawOutlineString(fg, "Draw Size: " + pointSize, 5, 60);
@@ -287,7 +284,7 @@ public class Main {
             super.reshape(x, y, width, height);
             if (width % 2 != 0) width++;
             if (height % 2 != 0) height++;
-            screen = Matrix3.scale(new Point2(width / 2d, height / 2d)).compose(Matrix3.offset(1, 1));
+            screen = AffineMatrix2.scale(new Point2(width / 2d, height / 2d)).compose(AffineMatrix2.offset(1, 1));
             buffer = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
             resetCanvas();
         }

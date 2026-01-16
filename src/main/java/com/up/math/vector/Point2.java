@@ -33,6 +33,10 @@ public class Point2 extends Point2D.Double {
         return new Point2(x * p.getX(), y * p.getY());
     }
 
+    public Point2 div(Point2D p) {
+        return new Point2(x / p.getX(), y / p.getY());
+    }
+
     public Point2 to(Point2D p) {
         return new Point2(p.getX() - x, p.getY() - y);
     }
@@ -51,6 +55,10 @@ public class Point2 extends Point2D.Double {
 
     public double length() {
         return Math.sqrt(x * x + y * y);
+    }
+
+    public double slope() {
+        return y / x;
     }
 
     public Point2 abs() {

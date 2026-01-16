@@ -1,10 +1,8 @@
-package com.up.math;
+package com.up.math.examples;
 
 import com.up.math.matrix.NeoMatrix3;
-import com.up.math.matrix.Matrix3;
 import com.up.math.number.*;
 import com.up.math.vector.NeoPoint2;
-import com.up.math.vector.Point2;
 import com.up.math.vector.Point2Double;
 
 import java.awt.*;

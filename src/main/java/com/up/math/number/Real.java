@@ -35,6 +35,11 @@ public interface Real<T extends Real<T>> extends Comparable<T> {
     
     public T exp();
     public T log();
+    
+    public T mod(T t);
+    
+    public T floor();
+    public T ceil();
 
     public static <T extends Real<T>> T atan2(T x, T y) {
         int x0 = x.compareTo(x.zero());

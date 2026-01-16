@@ -1,17 +1,13 @@
-package com.up.math;
+package com.up.math.examples;
 
-import com.up.math.matrix.NeoMatrix3;
-import com.up.math.matrix.Matrix3;
 import com.up.math.number.*;
 import com.up.math.vector.NeoPoint2;
-import com.up.math.vector.Point2;
 import com.up.math.vector.Point2Double;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
-import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
+
+import static com.up.math.number.Precision.P1_2;
 
 public class BFMain {
 
@@ -50,23 +46,9 @@ public class BFMain {
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-0.32467038152740657, -0.32267018065619124), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-1.765912092029173, 0.04135655056468296), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(1.4), new NeoPoint2<>(IntFixed.fromDouble(-0.32467038152740657), IntFixed.fromDouble(-0.32267018065619124)), new NeoComplex<>(IntFixed.fromInt(2))), IntFixed.ZERO, BFMain::drawFractal));
-        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(1.4), new NeoPoint2<>(IntFixed.fromHexString("-00000001.41e573611c9e57ee"), IntFixed.fromHexString("-00000000.68ccdcd44e3a9f56")), new NeoComplex<>(IntFixed.fromInt(2))), IntFixed.ZERO, BFMain::drawFractal));
+        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(P1_2, 1.4), new NeoPoint2<>(IntFixed.fromHexString(P1_2, "-00000001.41e573611c9e57ee"), IntFixed.fromHexString(P1_2, "-00000000.68ccdcd44e3a9f56")), new NeoComplex<>(IntFixed.fromInt(P1_2, 2))), IntFixed.fromInt(P1_2, 2), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(ShortFixed.PI().fromDouble(1.4), new NeoPoint2<>(ShortFixed.PI().fromDouble(-0.32467038152740657), ShortFixed.PI().fromDouble(-0.32267018065619124)), new NeoComplex<>(ShortFixed.fromInt(2))), ShortFixed.PI(), BFMain::drawFractal));
         f.setVisible(true);
-    }
-
-    private record Gradient(Color[] stops) {
-
-        public Color get(double t) {
-            double v = Math.max(0, Math.min(1, t)) * (stops.length - 1);
-            Color c1 = stops[(int)Math.floor(v)];
-            Color c2 = stops[(int)Math.ceil(v)];
-            return new Color((int)lerp(c1.getRed(), c2.getRed(), v - (int)v), (int)lerp(c1.getGreen(), c2.getGreen(), v - (int)v), (int)lerp(c1.getBlue(), c2.getBlue(), v - (int)v));
-        }
-
-        private double lerp(double a, double b, double t) {
-            return a + (b - a) * t;
-        }
     }
     
     private static Gradient grad = new Gradient(new Color[] {Color.blue.darker(), Color.cyan.darker(), Color.yellow.darker().darker(), Color.red.darker(), Color.magenta.darker(), Color.blue.darker()});

@@ -36,7 +36,7 @@
             <archive>
               <manifest>
                 <addClasspath>true</addClasspath>
-                <mainClass>com.up.math.BFMain</mainClass>
+                <mainClass>com.up.math.examples.BFMain</mainClass>
               </manifest>
             </archive>
           </configuration>

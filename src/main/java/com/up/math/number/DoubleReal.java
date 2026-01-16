@@ -101,6 +101,21 @@ public record DoubleReal(double d) implements Real<DoubleReal> {
         return new DoubleReal(Math.log(d));
     }
     
+    @Override
+    public DoubleReal mod(DoubleReal n) {
+        return new DoubleReal(d % n.d);
+    }
+    
+    @Override
+    public DoubleReal floor() {
+        return new DoubleReal(Math.floor(d));
+    }
+    
+    @Override
+    public DoubleReal ceil() {
+        return new DoubleReal(Math.ceil(d));
+    }
+    
     // TODO: Should replace these with constants
     @Override
     public DoubleReal zero() {

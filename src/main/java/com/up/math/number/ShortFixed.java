@@ -4,7 +4,7 @@ package com.up.math.number;
  * Represents an 16.X fixed point number
  * @author Ricky
  */
-public class ShortFixed extends BigFixed<ShortFixed> {
+public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
     // TODO: Rework this into a record class with everything properly immutable, especially since most methods are essentially written that way already.
     //       Actually, just make it follow IntFixed's ways
     final static int FIXED_MAX = 10;
@@ -425,6 +425,25 @@ public class ShortFixed extends BigFixed<ShortFixed> {
      */
     public ShortFixed atan() {
         return sub(pow(3).div(fromInt(3))).add(pow(5).div(fromInt(5))).sub(pow(7).div(fromInt(7)));
+    }
+    
+    @Override
+    public ShortFixed mod(ShortFixed n) {
+        // TODO: Probably a better way to do this
+        return n.mult(this.div(n).floor());
+    }
+    
+    // TODO: These are wrong for negatives
+    public ShortFixed floor() {
+        ShortFixed val = new ShortFixed();
+        val.parts[0] = parts[0];
+        return val;
+    }
+    
+    public ShortFixed ceil() {
+        ShortFixed val = floor();
+        if (!val.equals(this)) val.parts[0] = (short)(val.parts[0] + 1);
+        return val;
     }
 
     public static ShortFixed atan2(ShortFixed x, ShortFixed y) {
