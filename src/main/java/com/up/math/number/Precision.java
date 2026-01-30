@@ -5,8 +5,16 @@ public interface Precision {
     public int getSize();
     
     // TODO: Not yet implemented in fixed classes
-    public int getIntegerSize();
+    public int getIntegralSize();
     
+    
+    public class P1_1 extends InternalPrecision {
+        public P1_1() {
+            super(2, 1);
+        }
+    }
+    
+    public static P1_1 P1_1 = new P1_1();
     
     public class P1_2 extends InternalPrecision {
         public P1_2() {
@@ -15,6 +23,14 @@ public interface Precision {
     }
     
     public static P1_2 P1_2 = new P1_2();
+    
+    public class P1_3 extends InternalPrecision {
+        public P1_3() {
+            super(4, 1);
+        }
+    }
+    
+    public static P1_3 P1_3 = new P1_3();
 }
 
 class InternalPrecision implements Precision {
@@ -32,7 +48,7 @@ class InternalPrecision implements Precision {
     }
     
     @Override
-    public int getIntegerSize() {
+    public int getIntegralSize() {
         return iSize;
     }
 }

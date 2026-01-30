@@ -1,6 +1,7 @@
 package com.up.math.number;
 
 import java.util.HashMap;
+import java.util.function.Function;
 
 /**
  * Represents an 32.32X fixed point number
@@ -10,6 +11,7 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 //    public record IntFixed(boolean sign, int size, int[] parts, boolean overflow) extends BigFixed<com.up.math.number.IntFixed> {
     // TODO: It seems like it should be more possible to actually have dynamically sized numbers with how this is written now?
     //       Although adding in the type parameter for the stats kind of moved away from that so idk.
+    //       Or it's not a bad idea, but should be a seperate implementation, like IntDynamic or something
     
     public static final HashMap<Precision, IntFixed> ZERO = new HashMap<>();
     public static final HashMap<Precision, IntFixed> ONE = new HashMap<>();
@@ -749,6 +751,11 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 		}
         if (sign && o.sign) return -comp;
         return comp;
+    }
+    
+    @Override
+    public Function<Double, IntFixed<P>> getConverter() {
+        return d -> fromDouble(precision, d);
     }
 
 }

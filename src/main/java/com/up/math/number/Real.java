@@ -1,6 +1,7 @@
 package com.up.math.number;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.function.Function;
 
 public interface Real<T extends Real<T>> extends Comparable<T> {
     
@@ -66,7 +67,7 @@ public interface Real<T extends Real<T>> extends Comparable<T> {
 
     public static <T extends Real<T>> T fromDouble(T example, double d) {
         try {
-            return ((Class<T>)example.getClass()).getDeclaredConstructor(double.class).newInstance(d);
+            return example.getConverter().apply(d);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -82,4 +83,6 @@ public interface Real<T extends Real<T>> extends Comparable<T> {
     
 //    public T fromDouble(double d);
     public double toDouble();
+    
+    public Function<Double, T> getConverter();
 }

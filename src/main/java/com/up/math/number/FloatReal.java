@@ -1,5 +1,7 @@
 package com.up.math.number;
 
+import java.util.function.Function;
+
 public record FloatReal(float f) implements Real<FloatReal> {
     
     public FloatReal() {
@@ -168,5 +170,10 @@ public record FloatReal(float f) implements Real<FloatReal> {
     @Override
     public String toString() {
         return "" + f;
+    }
+    
+    @Override
+    public Function<Double, FloatReal> getConverter() {
+        return FloatReal::fromDouble;
     }
 }

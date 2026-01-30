@@ -7,7 +7,7 @@ import com.up.math.vector.Point2Double;
 import java.awt.*;
 import java.awt.event.*;
 
-import static com.up.math.number.Precision.P1_2;
+import static com.up.math.number.Precision.*;
 
 public class BFMain {
 
@@ -46,7 +46,7 @@ public class BFMain {
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-0.32467038152740657, -0.32267018065619124), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(new DoubleReal(2.5), new Point2Double(-1.765912092029173, 0.04135655056468296), new NeoComplex<>(new DoubleReal(2))), new DoubleReal(0), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(1.4), new NeoPoint2<>(IntFixed.fromDouble(-0.32467038152740657), IntFixed.fromDouble(-0.32267018065619124)), new NeoComplex<>(IntFixed.fromInt(2))), IntFixed.ZERO, BFMain::drawFractal));
-        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(P1_2, 1.4), new NeoPoint2<>(IntFixed.fromHexString(P1_2, "-00000001.41e573611c9e57ee"), IntFixed.fromHexString(P1_2, "-00000000.68ccdcd44e3a9f56")), new NeoComplex<>(IntFixed.fromInt(P1_2, 2))), IntFixed.fromInt(P1_2, 2), BFMain::drawFractal));
+        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(IntFixed.fromDouble(P1_1, 1.4), new NeoPoint2<>(IntFixed.fromHexString(P1_1, "-00000001.41e573611c9e57ee"), IntFixed.fromHexString(P1_1, "-00000000.68ccdcd44e3a9f56")), new NeoComplex<>(IntFixed.fromInt(P1_1, 2))), IntFixed.fromInt(P1_1, 2), BFMain::drawFractal));
 //        f.add(new FunctionDrawer<>(new FunctionDrawer.DrawingParameters<>(ShortFixed.PI().fromDouble(1.4), new NeoPoint2<>(ShortFixed.PI().fromDouble(-0.32467038152740657), ShortFixed.PI().fromDouble(-0.32267018065619124)), new NeoComplex<>(ShortFixed.fromInt(2))), ShortFixed.PI(), BFMain::drawFractal));
         f.setVisible(true);
     }

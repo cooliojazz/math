@@ -1,5 +1,7 @@
 package com.up.math.number;
 
+import java.util.function.Function;
+
 public record DoubleReal(double d) implements Real<DoubleReal> {
     
     public DoubleReal() {
@@ -164,5 +166,10 @@ public record DoubleReal(double d) implements Real<DoubleReal> {
     @Override
     public String toString() {
         return "" + d;
+    }
+    
+    @Override
+    public Function<Double, DoubleReal> getConverter() {
+        return DoubleReal::fromDouble;
     }
 }

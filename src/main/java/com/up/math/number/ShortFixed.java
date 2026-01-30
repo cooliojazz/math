@@ -1,5 +1,7 @@
 package com.up.math.number;
 
+import java.util.function.Function;
+
 /**
  * Represents an 16.X fixed point number
  * @author Ricky
@@ -565,6 +567,16 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
 		}
         if (sign && o.sign) return -comp;
         return comp;
+    }
+    
+//    @Override
+//    public DoubleConverter<ShortFixed<P>> getConverter() {
+//        return d -> fromDouble(precision, d);
+//    }
+    
+    @Override
+    public Function<Double, ShortFixed> getConverter() {
+        return ShortFixed::fromDouble;
     }
 
 }
