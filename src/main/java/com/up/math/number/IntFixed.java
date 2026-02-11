@@ -635,6 +635,13 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         return precision.getIntegralSize() == 0 ? 0 : ((parts[precision.getIntegralSize() - 1] & 0x7FFFFFFF) ^ (sign ? 0xFFFFFFFF : 0x0)) + (sign ? 1 : 0);
     }
     
+    public long toLong() {
+        return precision.getIntegralSize() == 0 ? 0 :
+               (((precision.getIntegralSize() > 1 ? (parts[precision.getIntegralSize() - 2] & 0x7FFFFFFFl) << 32 : 0) + (parts[precision.getIntegralSize() - 1] & 0xFFFFFFFFl)) ^
+                   (sign ? 0xFFFFFFFFFFFFFFFFl : 0x0)) +
+               (sign ? 1 : 0);
+    }
+    
     public double toDouble() {
 		if (abs().compareTo(zero()) == 0) return 0;
         // TODO: Should probably add a field for this instead of relying on a specific detection
