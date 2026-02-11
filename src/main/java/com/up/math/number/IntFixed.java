@@ -214,6 +214,19 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         return ans.reduce();
     }
 
+    public static <P extends Precision> IntFixed<P> fromLong(P precision, long a) {
+        int[] parts = new int[precision.getSize()];
+        boolean sign = (a & 0x8000000000000000l) >> 63 != 0;
+        if (sign) {
+            parts[precision.getIntegralSize() - 2] = (int)(~(a - 1) >> 32);
+            parts[precision.getIntegralSize() - 1] = (int)~(a - 1);
+        } else {
+            parts[precision.getIntegralSize() - 2] = (int)(a >> 32);
+            parts[precision.getIntegralSize() - 1] = (int)a;
+		}
+        return new IntFixed<>(precision, sign, precision.getIntegralSize(), parts, false);
+    }
+
     public static <P extends Precision> IntFixed<P> fromInt(P precision, int a) {
         int[] parts = new int[precision.getSize()];
         boolean sign = (a & 0x80000000) >> 31 != 0;

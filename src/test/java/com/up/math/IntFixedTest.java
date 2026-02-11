@@ -12,25 +12,6 @@ public class IntFixedTest {
     private static Random r = new Random();
     
     public static void main(String[] args) {
-        HashMap<Integer, Double> h = new HashMap<>();
-        TreeSet<Integer> s = new TreeSet<>();
-        for (int i = 0; i < 1000000; i++) {
-            int x = r.nextInt();
-            h.put(x, r.nextDouble());
-            s.add(x);
-        }
-        long time = System.nanoTime();
-        for (int i = 0; i < 10000000; i++) {
-            h.containsKey(r.nextInt());
-        }
-        System.out.println("HashMap time: " + (System.nanoTime() - time) / 1000000 / 1000d);
-        time = System.nanoTime();
-        for (int i = 0; i < 10000000; i++) {
-            s.contains(r.nextInt());
-        }
-        System.out.println("HashSet time: " + (System.nanoTime() - time) / 1000000 / 1000d);
-        
-        
         int iter = 100000;
         String[] tests = new String[] {"toDouble", "add", "mult", "div", "exp2", "exp", "sqrt", "pow", "sin", "cos"};
         for (String test : tests) {
