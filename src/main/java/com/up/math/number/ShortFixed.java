@@ -23,10 +23,11 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
 	public ShortFixed() {
 	}
 
-	public ShortFixed(boolean sign, int size, short[] parts) {
+	public ShortFixed(boolean sign, int size, short[] parts, boolean overflow) {
 		this.sign = sign;
 		this.size = size;
 		this.parts = parts;
+        this.overflow = overflow;
 	}
     
     public ShortFixed(double d) {
@@ -49,18 +50,30 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
 
     @Override
     public ShortFixed two() {
-        return ShortFixed.fromInt(1);
+        return ShortFixed.fromInt(2);
     }
 
+    public ShortFixed halfPi() {
+        return PI().div(two());
+    }
+    
     @Override
     public ShortFixed pi() {
         return PI();
+    }
+    
+    public ShortFixed tau() {
+        return PI().mult(two());
     }
 
     @Override
     public ShortFixed e() {
         // TODO: Add accurate constants
         return fromDouble(Math.E);
+    }
+    
+    public ShortFixed l2e() {
+        return ShortFixed.fromDouble(1.442695040888963407359924681);
     }
 
     @Override
@@ -84,6 +97,7 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
     }
 
     public ShortFixed lshBits(int amount) {
+        if (amount < 0) return rshBits(Math.abs(amount));
         ShortFixed ans = clone();
         for (int i = 0; i < amount; i++) {
             for (int j = 0; j < ans.size; j++) {
@@ -95,6 +109,7 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
     }
 
     public ShortFixed rshBits(int amount) {
+        if (amount < 0) return lshBits(Math.abs(amount));
         ShortFixed ans = clone();
         for (int i = 0; i < amount; i++) {
 			ans = ans.expand();
@@ -195,6 +210,16 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
 		}
         return ans;
     }
+    
+    public static ShortFixed fromHexString(String s) {
+        short[] parts = new short[FIXED_MAX];
+        int size = Math.min((s.length() - 2) / 8, FIXED_MAX);
+        for (int i = 0; i < size; i++) {
+            int start = i * 4 + 1 + (i > 0 ? 1 : 0);
+            parts[i] = (short)Integer.parseUnsignedInt(s.substring(start, start + 4), 16);
+		}
+        return new ShortFixed(s.charAt(0) == '-', size, parts, false);
+    }
 
     public ShortFixed negate() {
         ShortFixed ans = clone();
@@ -275,7 +300,7 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
                 nOverflow = true;
             }
 		}
-        return new ShortFixed(sign ^ b.sign, nSize, nParts).reduce();
+        return new ShortFixed(sign ^ b.sign, nSize, nParts, nOverflow).reduce();
         // TODO: Missing overflow param in construct
 //        return new ShortFixed(sign ^ b.sign, nSize, nParts, nOverflow).reduce();
     }
@@ -366,12 +391,8 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
     }
 
     public ShortFixed pow(ShortFixed p) {
-//        ShortFixed ans = this;
-//        for (int i = 1; i < p; i++) {
-//            ans = ans.mult(this);
-//        }
-//        return ans;
-        return null;
+        // TODO: Faster way
+        return p.mult(log2()).exp2();
     }
 
     /**
@@ -380,11 +401,13 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
      */
     public ShortFixed sin() {
         ShortFixed val = this;
-        while (val.compareTo(PI().negate()) < 0) {
-            val = val.add(PI().mult(fromInt(2)));
+        if (val.compareTo(pi().negate()) < 0) {
+            val = sub(tau().mult(add(pi()).div(tau()).integ())).add(tau());
+        } else {
+            val = sub(tau().mult(add(pi()).div(tau()).integ()));
         }
-        while (val.compareTo(PI()) > 0) {
-            val = val.sub(PI().mult(fromInt(2)));
+        if (val.abs().compareTo(halfPi()) > 0) {
+            return pi().sub(val).sin();
         }
         return val.sub(val.pow(3).div(fromInt(6)))
                   .add(val.pow(5).div(fromInt(120)))
@@ -396,10 +419,11 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
      * @return
      */
     public ShortFixed sinh() {
-        ShortFixed val = this;
-        return val.add(val.pow(3).div(fromInt(6)))
-                  .add(val.pow(5).div(fromInt(120)))
-                  .add(val.pow(7).div(fromInt(5040)));
+//        ShortFixed val = this;
+//        return val.add(val.pow(3).div(fromInt(6)))
+//                  .add(val.pow(5).div(fromInt(120)))
+//                  .add(val.pow(7).div(fromInt(5040)));
+        return exp().sub(negate().exp()).div(two());
     }
 
     /**
@@ -407,10 +431,11 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
      * @return
      */
     public ShortFixed cosh() {
-        ShortFixed val = this;
-        return val.add(val.pow(2).div(fromInt(2)))
-                  .add(val.pow(4).div(fromInt(24)))
-                  .add(val.pow(6).div(fromInt(720)));
+//        ShortFixed val = this;
+//        return val.add(val.pow(2).div(fromInt(2)))
+//                  .add(val.pow(4).div(fromInt(24)))
+//                  .add(val.pow(6).div(fromInt(720)));
+        return exp().add(negate().exp()).div(two());
     }
 
     /**
@@ -447,6 +472,18 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
         if (!val.equals(this)) val.parts[0] = (short)(val.parts[0] + 1);
         return val;
     }
+    
+    public ShortFixed integ() {
+        short[] nParts = new short[FIXED_MAX];
+        nParts[0] = parts[0];
+        return new ShortFixed(sign, 1, nParts, overflow);
+    }
+    
+    public ShortFixed frac() {
+        short[] nParts = new short[FIXED_MAX];
+        System.arraycopy(parts, 1, nParts, 1, FIXED_MAX - 1);
+        return new ShortFixed(sign, size, nParts, overflow);
+    }
 
     public static ShortFixed atan2(ShortFixed x, ShortFixed y) {
         int x0 = x.compareTo(new ShortFixed());
@@ -470,24 +507,103 @@ public class ShortFixed extends BigFixed<ShortFixed, InternalPrecision> {
         }
     }
     
+    public static ShortFixed exp2(int p) {
+        short[] parts = new short[FIXED_MAX];
+        if (p > 15) return new ShortFixed(false, 1, parts, true);
+        p += (FIXED_MAX - 1) * 16;
+        if (p < 0) return new ShortFixed(false, 1, parts, false);
+        parts[FIXED_MAX - 1 - p / 16] |= (short)(1l << (p % 16));
+        return new ShortFixed(false, FIXED_MAX, parts, false).reduce();
+    }
+        
+//    @Override
+//    public IntFixed exp2() {
+//        // Only 2 term taylor approximation not extremely accurate but reasonably fast
+//        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy? Done, but did it help?
+//        IntFixed f = frac().div(TWO);
+//        if (compareTo(fromInt(33)) > 0) return new IntFixed(false, 1, new int[FIXED_MAX], true);
+//        // TODO: Move these range checks instead the respective shift functions
+//                return one().lshBits(Math.max(-(FIXED_MAX - 1) * 32, Math.min(32, integ().toInt()))).mult(
+//                            one()
+//                            .add(f.mult(L2))
+//                            .add(f.square().mult(L22).div(TWO))
+//                            .add(f.pow(3).mult(L32).div(fromInt(6)))
+//                            .add(f.pow(4).mult(L42).div(fromInt(24)))
+//                        ).square();
+//    }
+    
+    private static ShortFixed[] sqrts;
+    static {
+        sqrts = new ShortFixed[32];
+        sqrts[0] = fromInt(2);
+        for (int i = 1; i < sqrts.length; i++) {
+            sqrts[i] = sqrts[i - 1].sqrt();
+        }
+    }
+    
     @Override
     public ShortFixed exp2() {
-        return null;
+        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy? Done, but did it help?
+        ShortFixed f = frac().div(two());
+        if (compareTo(fromInt(33)) > 0) return new ShortFixed(false, 1, new short[FIXED_MAX], true);
+        ShortFixed temp = f;
+        ShortFixed ans = one();
+        int n = 1;
+        // TODO: Better option than arbitrary (Up to (FIXED_MAX - 1) * 32 for max accuracy) iterations here?
+        for (; temp.compareTo(zero()) != 0 && n < 32; n++) {
+            temp = temp.lshBits(1);
+            if ((temp.parts[0] & 0x1) > 0) {
+                ans = sign ? ans.div(sqrts[n - 1]) : ans.mult(sqrts[n - 1]);
+            }
+        }
+        return ans.mult(exp2(integ().toShort()));
     }
     
     @Override
     public ShortFixed exp() {
-        return null;
+        return mult(l2e()).exp2();
     }
 
     @Override
     public ShortFixed log2() {
-        return null;
+        // TODO: Not sure if null is right here
+        if (compareTo(zero()) <= 0) return new ShortFixed(true, 1, ShortFixed.fromHexString(" FFFF").parts, true);
+        int n = 0;
+        ShortFixed temp = this;
+        while (temp.compareTo(one()) < 0) {
+            temp = temp.lshBits(1);
+            n--;
+        }
+        while (temp.compareTo(two()) >= 0) {
+            temp = temp.rshBits(1);
+            n++;
+        }
+        
+        ShortFixed frac = zero();
+        int factor = 0;
+//        while (temp.compareTo(ONE) != 0 && factor > -(precision.getSize() - 1) * 16l) {
+        // This seems like a decent amount of accuracy for now for the speed
+        while (temp.compareTo(one()) != 0 && factor > -16) {
+            int m = 0;
+            ShortFixed temp2 = temp;
+            while (temp2.compareTo(two()) < 0) {
+                temp2 = temp2.square();
+                m++;
+            }
+            temp = temp2.rshBits(1);
+            factor -= m;
+            frac = frac.add(one().lshBits(factor));
+        }
+        return ShortFixed.fromInt(n).add(frac);
     }
 
     @Override
     public ShortFixed log() {
-        return null;
+        return log2().div(l2e());
+    }
+    
+    public short toShort() {
+        return (short)((sign ? 1 : 0) + (parts[0] & 0x7FFF ^ (sign ? 0xFFFF : 0)));
     }
 
     public double toDouble() {

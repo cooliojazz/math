@@ -1,6 +1,7 @@
 package com.up.math.number;
 
 import java.util.HashMap;
+import java.util.Random;
 import java.util.function.Function;
 
 /**
@@ -35,17 +36,6 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         this.size = size;
         this.parts = parts;
         this.overflow = overflow;
-        checkConstants();
-    }
-    
-    // TODO: This broke the Real constructor. Is there any way to fix it without requiring subclassing to obtain the P class? Would that even work?
-    public IntFixed(P precision, double d) {
-        IntFixed<P> temp = fromDouble(precision, d);
-        this.precision = precision;
-        this.sign = temp.sign;
-        this.size = temp.size;
-        this.parts = temp.parts;
-        this.overflow = temp.overflow;
         checkConstants();
     }
 
@@ -144,16 +134,26 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 
     public IntFixed<P> rshBits(int amount) {
         if (amount < 0) return lshBits(Math.abs(amount));
-        IntFixed<P> ans = clone();
+//        IntFixed<P> ans = clone();
+//        for (int i = 0; i < amount; i++) {
+//			  ans = ans.expand();
+//            for (int j = ans.size - 1; j >= 0; j--) {
+//                if (j < ans.size - 1) ans.parts[j + 1] |= (ans.parts[j] & 1) << 31;
+//                ans.parts[j] = ans.parts[j] >>> 1;
+//            }
+//			  ans = ans.reduce();
+//        }
+//        return ans;
+        int nSize = precision.getSize();
+        int[] nParts = new int[nSize];
+        System.arraycopy(parts, 0, nParts, 0, size);
         for (int i = 0; i < amount; i++) {
-			ans = ans.expand();
-            for (int j = ans.size - 1; j >= 0; j--) {
-                if (j < ans.size - 1) ans.parts[j + 1] |= (ans.parts[j] & 1) << 31;
-                ans.parts[j] = ans.parts[j] >>> 1;
+            for (int j = nSize - 1; j >= 0; j--) {
+                if (j < nSize - 1) nParts[j + 1] |= (nParts[j] & 1) << 31;
+                nParts[j] = nParts[j] >>> 1;
             }
-			ans = ans.reduce();
         }
-        return ans;
+        return new IntFixed<>(precision, sign, nSize, nParts, false).reduce();
     }
 
     public IntFixed<P> lshParts(int amount) {
@@ -204,13 +204,13 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         long raw = Double.doubleToRawLongBits(a);
         int exponent = (int)((raw & 0x7FF0000000000000l) >>> 52) - 1023;
         int[] parts = new int[precision.getSize()];
-        parts[0] = 1;
-        parts[1] = (int)((raw & 0xFFFFFFFF00000l) >> 20);
-        if (parts.length > 2) parts[2] = (int)((raw & 0xFFFFFl) << 12);
-        // Then shift for days
+        
+        parts[0] = 0x80000000 | (int)((raw & 0xFFFFFFFE00000l) >> 21);
+        if (precision.getSize() > 1) parts[1] = (int)((raw & 0x1FFFFFl) << 11);
+        exponent -= 32 * (precision.getIntegralSize() - 1) + 31;
+        
         IntFixed<P> ans = new IntFixed<>(precision, raw >>> 63 != 0, Math.min(3, parts.length), parts, false);
-        if (exponent < 0) ans = ans.rshBits(-exponent);
-        if (exponent > 0) ans = ans.lshBits(exponent);
+        ans = ans.lshBits(exponent);
         return ans.reduce();
     }
 
@@ -218,11 +218,11 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         int[] parts = new int[precision.getSize()];
         boolean sign = (a & 0x80000000) >> 31 != 0;
         if (sign) {
-			parts[0] = ~(a - 1);
+			parts[precision.getIntegralSize() - 1] = ~(a - 1);
         } else {
-			parts[0] = a;
+			parts[precision.getIntegralSize() - 1] = a;
 		}
-        return new IntFixed<>(precision, sign, 1, parts, false);
+        return new IntFixed<>(precision, sign, precision.getIntegralSize(), parts, false);
     }
 
     public static <P extends Precision> IntFixed<P> fromShort(P precision, short a) {
@@ -236,6 +236,7 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         return new IntFixed<>(precision, sign, 1, parts, false);
     }
 
+    // TODO: Needs fixed for X.X compatibility
     public static <P extends Precision> IntFixed<P> fromBitString(P precision, String s) {
         int[] parts = new int[precision.getSize()];
         int size = Math.min((s.length() - 2) / 32, precision.getSize());
@@ -247,14 +248,25 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         return new IntFixed<>(precision, s.charAt(0) == '-', size, parts, false);
     }
 
+    // TODO: Doesn't support more than 1 (32 bit) digit in integer part of passed string
     public static <P extends Precision> IntFixed<P> fromHexString(P precision, String s) {
         int[] parts = new int[precision.getSize()];
-        int size = Math.min((s.length() - 2) / 8, precision.getSize());
+        int size = Math.min((s.length() - 2) / 8, precision.getFractionalSize() + 1);
         for (int i = 0; i < size; i++) {
             int start = i * 8 + 1 + (i > 0 ? 1 : 0);
-            parts[i] = Integer.parseUnsignedInt(s.substring(start, start + 8), 16);
+            parts[i + precision.getIntegralSize() - 1] = Integer.parseUnsignedInt(s.substring(start, start + 8), 16);
 		}
-        return new IntFixed<>(precision, s.charAt(0) == '-', size, parts, false);
+        return new IntFixed<>(precision, s.charAt(0) == '-', size + precision.getIntegralSize() - 1, parts, false);
+    }
+    
+    public static <P extends Precision> IntFixed<P> random(P precision, Random r) {
+        int[] parts = new int[precision.getSize()];
+        for (int i = 0; i < parts.length; i++) {
+            parts[i] = r.nextInt();
+		}
+//        // TODO: Fix tests so they work better at edge of numbers
+//        parts[0] &= 0x0000FFFF;
+        return new IntFixed<>(precision, r.nextBoolean(), precision.getSize(), parts, false);
     }
 
     public IntFixed<P> negate() {
@@ -313,24 +325,27 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         for (int i = size - 1; i >= 0; i--) {
 			long carry = 0;
 			for (int j = b.size - 1; j >= 0; j--) {
-                int pos = i + j;
+                int pos = i + j - precision.getIntegralSize() + 1;
                 long part = carry;
                 part += (parts[i] & 0xFFFFFFFFL) * (b.parts[j] & 0xFFFFFFFFL);
-                if (pos < nSize) {
+                if (pos < nSize && pos >= 0) {
                     part += nParts[pos] & 0xFFFFFFFFL;
                     nParts[pos] = (int)(part & 0xFFFFFFFFL);
                 }
 				carry = part >>> 32;
             }
-            if (i > 0) {
-                nParts[i - 1] = (int)(carry & 0xFFFFFFFFL + nParts[i - 1] & 0xFFFFFFFFL);
-            } else if (carry > 0) {
-                nOverflow = true;
+            if (carry > 0) {
+                if (i > 0) {
+                    nParts[i - 1] = (int)((carry & 0xFFFFFFFFL) + (nParts[i - 1] & 0xFFFFFFFFL));
+                } else {
+                    nOverflow = true;
+                }
             }
 		}
         return new IntFixed<>(precision, sign ^ b.sign, nSize, nParts, nOverflow).reduce();
     }
 
+    // TODO: Check for X.X compatibility. I think it works now?
     public IntFixed<P> div(IntFixed<P> b) {
         // Just trying reusing the inverse code for now, there's probably a better way
         IntFixed<P> div = b.abs();
@@ -338,14 +353,16 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         int[] nParts = new int[precision.getSize()];
         int nSize = 2;
         int pos = -1;
-        while (rem.compareTo(div) > 0 && pos > -31) {
-            div = div.lshBits(1);
+        while (rem.compareTo(div) >= 0 && pos > -precision.getFractionalSize() * 32 + 1) {
+//            div = div.lshBits(1);
+            // Right shifting the remainder instead preserves more higher-order accuracy
+            rem = rem.rshBits(1);
             pos--;
         }
-        while (!rem.equals(new IntFixed<>(precision)) && pos < (precision.getSize() - 1) * 32) {
+        while (!rem.equals(zero()) && pos < precision.getFractionalSize() * 32) {
             if (rem.compareTo(div) >= 0) {
                 rem = rem.sub(div);
-                int tpos = pos + 32;
+                int tpos = pos + precision.getIntegralSize() * 32;
                 nParts[tpos / 32] |= 1 << (31 - (tpos % 32));
                 if (tpos >= nSize * 32) nSize++;
             }
@@ -354,44 +371,6 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         }
         return new IntFixed<>(precision, sign ^ b.sign, nSize, nParts, false).reduce();
     }
-//    
-//    /**
-//     * Fairly limited by the 32-bit integer part of the number
-//     */
-//    public BigFixed inverse() {
-//        // Only worked for powers of 2
-////        int revI = 0;
-////        for (int i = 0; i < 16; i++) {
-////            revI |= ((parts[0] >> (16 - i)) & 1) << i;
-////        }
-////        int revF = 0;
-////        if (size > 1) {
-////            for (int i = 0; i < 16; i++) {
-////                revF |= ((parts[1] >> (16 - i)) & 1) << i;
-////            }
-////        }
-////        return new BigFixed(sign, 2, new int[] {(int)revF, (int)revI});
-//        
-//        BigFixed div = this;
-//        BigFixed rem = fromInt(1);
-//        BigFixed ans = new BigFixed();
-//        ans.size = 2;
-//        int pos = -1;
-//        while (rem.compareTo(div) > 0 && pos > -15) {
-//            div = div.lshBF(1);
-//            pos--;
-//        }
-//        while (!rem.equals(new BigFixed()) && pos < (precision.getSize() - 1) * 16) {
-//            if (rem.compareTo(div) >= 0) {
-//                rem = rem.sub(div);
-//                ans.parts[(pos + 16) / 16] |= 1 << (15 - ((pos + 16) % 16));
-//                if (pos >= ans.size * 16) ans.size++;
-//            }
-//            div = div.rshBF(1);
-//            pos++;
-//        }
-//        return ans;
-//    }
 
     public IntFixed<P> inverse() {
         return one().div(this);
@@ -399,6 +378,7 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 
     
     public IntFixed<P> sqrt() {
+        if (compareTo(zero()) < 0) return new IntFixed<>(precision, true, 0, new int[precision.getSize()], true);
         IntFixed<P> val = this.rshBits(1);
         // TODO: Replace arbitrary precision with some form of convergence testing?
         for (int i = 0; i < 8; i++) {
@@ -406,21 +386,6 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
         }
         return val;
     }
-    
-    // So far pointless, cant eliminate the useage of pow in pow
-//    public IntFixed powNew(IntFixed p) {
-//        // Needs inital estimate to converge faster
-//        IntFixed val = this;
-//        // TODO: Replace arbitrary precision with some form of convergence testing?
-//        for (int i = 0; i < 10; i++) {
-////            val = val.sub(this.div(val)).div(TWO);
-////            val = val.mult(p.sub(ONE).add(this.div(val.pow(p)))).div(p);
-////            val = val.mult(p.sub(ONE)).add(this.div(val.pow(p.sub(ONE)))).div(p);
-////            val = val.mult(this.div(val.pow(p)).add(p).sub(ONE)).div(p);
-//            val = val.mult(ONE.add(p.mult(this.div(val.pow(p.inverse())).sub(ONE))));
-//        }
-//        return val;
-//    }
 
     public IntFixed<P> square() {
         return mult(this);
@@ -435,6 +400,7 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
     }
 
     public IntFixed<P> pow(IntFixed<P> p) {
+        if (compareTo(zero()) < 0 && !frac().equals(0)) return new IntFixed<>(precision, true, 0, new int[precision.getSize()], true);
         // TODO: Faster way
         return p.mult(log2()).exp2();
     }
@@ -446,10 +412,11 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
     public IntFixed<P> sin() {
         IntFixed<P> val = this;
         if (val.compareTo(pi().negate()) < 0) {
-            val = sub(tau().mult(add(pi()).div(tau()).integ())).add(tau());
+            val = this.sub(tau().mult(this.add(pi()).div(tau()).integ())).add(tau());
         } else {
-            val = sub(tau().mult(add(pi()).div(tau()).integ()));
+            val = this.sub(tau().mult(this.add(pi()).div(tau()).integ()));
         }
+        // TODO: Works for some numbers, but recursion fails and is slow for others
         if (val.abs().compareTo(halfPi()) > 0) {
             return pi().sub(val).sin();
         }
@@ -459,6 +426,14 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 //                  .add(val.pow(9).div(fromInt(362880)));
                 // TODO: Might be more accurate to arrange the constants as their log_p(c) forms as below to allow multiplying smaller numbers? Or is that too small of a difference to matter?
 //                  .add(val.sub(fromDouble(5.82636277243977574348082925758)).pow(9));
+    }
+
+    /**
+     * 
+     * @return
+     */
+    public IntFixed<P> cos() {
+        return add(halfPi()).sin();
     }
 
     /**
@@ -484,14 +459,6 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 //                  .add(val.pow(4).div(fromInt(24)))
 //                  .add(val.pow(6).div(fromInt(720)));
         return exp().add(negate().exp()).div(two());
-    }
-
-    /**
-     * U
-     * @return
-     */
-    public IntFixed<P> cos() {
-        return add(halfPi()).sin();
     }
 
     /**
@@ -548,51 +515,32 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
     
     public IntFixed<P> integ() {
         int[] nParts = new int[precision.getSize()];
-        nParts[0] = parts[0];
-        return new IntFixed<>(precision, sign, 1, nParts, overflow);
+        System.arraycopy(parts, 0, nParts, 0, precision.getIntegralSize());
+        return new IntFixed<>(precision, sign, precision.getIntegralSize(), nParts, overflow);
     }
     
     public IntFixed<P> frac() {
         int[] nParts = new int[precision.getSize()];
-        System.arraycopy(parts, 1, nParts, 1, precision.getSize() - 1);
+        System.arraycopy(parts, precision.getIntegralSize(), nParts, precision.getIntegralSize(), precision.getFractionalSize());
         return new IntFixed<>(precision, sign, size, nParts, overflow);
     }
     
-//    // TODO: Obviously too much precision for a double here, rework to an exact initializer later
-//    private static final IntFixed L2 = fromDouble(0.69314718055994530941723212145817656807550013436025525412068000949339362196);
-//    private static final IntFixed L22 = fromDouble(0.48045301391820142466710252632666497173055295159454558686686413362366538225);
-//    private static final IntFixed L32 = fromDouble(0.33302465198892947971885358261173054415612648534860665239121184302385252460);
-//    private static final IntFixed L42 = fromDouble(0.23083509858308345188749771776781277151831629255853082377615679723706711050);
-    
     public static <P extends Precision> IntFixed<P> exp2(P precision, int p) {
         int[] parts = new int[precision.getSize()];
-        if (p > 31) return new IntFixed<>(precision, false, 1, parts, true);
-        p += (precision.getSize() - 1) * 32;
-        if (p < 0) return new IntFixed<>(precision, false, 1, parts, false);
-        parts[precision.getSize() - 1 - p / 32] |= (int)(1l << (p % 32));
+        if (p > precision.getIntegralSize() * 32 - 1) return new IntFixed<>(precision, false, 1, parts, true);
+        if (p < -precision.getFractionalSize() * 32) return new IntFixed<>(precision, false, 1, parts, false);
+        if (p < 0) {
+            parts[precision.getIntegralSize() - 1 - (p - 31) / 32] |= (int)(1l << ((p + precision.getFractionalSize() * 32) % 32));
+        } else {
+            parts[precision.getIntegralSize() - 1 - p / 32] |= (int)(1l << (p % 32));
+        }
         return new IntFixed<>(precision, false, precision.getSize(), parts, false).reduce();
     }
-    
-//    @Override
-//    public IntFixed exp2() {
-//        // Only 2 term taylor approximation not extremely accurate but reasonably fast
-//        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy? Done, but did it help?
-//        IntFixed f = frac().div(TWO);
-//        if (compareTo(fromInt(33)) > 0) return new IntFixed(false, 1, new int[precision.getSize()], true);
-//        // TODO: Move these range checks instead the respective shift functions
-//                return one().lshBits(Math.max(-(precision.getSize() - 1) * 32, Math.min(32, integ().toInt()))).mult(
-//                            one()
-//                            .add(f.mult(L2))
-//                            .add(f.square().mult(L22).div(TWO))
-//                            .add(f.pow(3).mult(L32).div(fromInt(6)))
-//                            .add(f.pow(4).mult(L42).div(fromInt(24)))
-//                        ).square();
-//    }
 
     private static HashMap<Precision, IntFixed[]> sqrtSets = new HashMap<>();
     private IntFixed<P>[] getSqrts() {
         if (!sqrtSets.containsKey(precision)) {
-            IntFixed<P>[] sqrts = new IntFixed[32];
+            IntFixed<P>[] sqrts = new IntFixed[precision.getFractionalSize() * 32];
             sqrts[0] = two();
             for (int i = 1; i < sqrts.length; i++) {
                 sqrts[i] = sqrts[i - 1].sqrt();
@@ -604,31 +552,29 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
     
     @Override
     public IntFixed<P> exp2() {
-        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy? Done, but did it help?
-        IntFixed<P> f = frac().div(two());
-        if (compareTo(fromInt(precision, 33)) > 0) return new IntFixed<>(precision, false, 1, new int[precision.getSize()], true);
-        IntFixed<P> temp = f;
-        IntFixed<P> ans = one();
-        int n = 1;
-//        int sqtn = 1;
-//        IntFixed sqrts = TWO;
+        // TODO: offset calculation to put frac() within [-0.5, 0.5] for better accuracy?
+        //     - Done, but did it help?
+        // Disabled until it works for X.X
+//        if (compareTo(fromInt(precision, 33)) > 0) return new IntFixed<>(precision, false, 1, new int[precision.getSize()], true);
+//        IntFixed<P> f = frac().div(two());
+//        IntFixed<P> temp = f;
+        IntFixed<P> temp = frac();
+        if (!temp.equals(zero())) temp = temp.div(two());
+//        IntFixed<P> ans = one();
+        IntFixed<P> ans = exp2(precision, integ().toInt());
         IntFixed<P>[] sqrts = getSqrts();
-        // TODO: Better option than arbitrary (Up to (precision.getSize() - 1) * 32 for max accuracy) iterations here?
-        for (; temp.compareTo(zero()) != 0 && n < 32; n++) {
+        // TODO: Better option than arbitrary (Up to precision.getFractionalSize() * 32 for max accuracy) iterations here?
+        for (int n = 1; !temp.equals(zero()) && n < precision.getFractionalSize() * 32; n++) {
             temp = temp.lshBits(1);
-            if ((temp.parts[0] & 0x1) > 0) {
-//                IntFixed sqrts = TWO;
-//                for (int i = 1; i < n; i++) {
-//                for (; sqtn < n; sqtn++) {
-//                    sqrts = sqrts.sqrt();
-//                }
-//                ans = sign ? ans.div(sqrts) : ans.mult(sqrts);
+            if ((temp.parts[precision.getIntegralSize() - 1] & 0x1) == 1) {
                 ans = sign ? ans.div(sqrts[n - 1]) : ans.mult(sqrts[n - 1]);
             }
         }
-        return ans.mult(exp2(precision, integ().toInt()));
+        return ans;
     }
+    // 2^(i+f) = 2^i*2^f = 2^i*2^f0*2^f1*
     
+    // TODO: Check for X.X compatibility
     @Override
     public IntFixed<P> log2() {
         // TODO: Not sure if null is right here
@@ -673,11 +619,13 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
     }
     
     public int toInt() {
-        return ((parts[0] & 0x7FFFFFFF) ^ (sign ? 0xFFFFFFFF : 0x0)) + (sign ? 1 : 0);
+        return precision.getIntegralSize() == 0 ? 0 : ((parts[precision.getIntegralSize() - 1] & 0x7FFFFFFF) ^ (sign ? 0xFFFFFFFF : 0x0)) + (sign ? 1 : 0);
     }
     
     public double toDouble() {
-		if (abs().compareTo(new IntFixed<P>(precision)) == 0) return 0;
+		if (abs().compareTo(zero()) == 0) return 0;
+        // TODO: Should probably add a field for this instead of relying on a specific detection
+        if (sign && overflow && size == 0) return Double.NaN;
 		int firstOne = -1;
 		for (int i = 0; i < size && firstOne == -1; i++) {
 			for (int b = 31; b >= 0; b--) {
@@ -687,19 +635,10 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 				}
 			}
 		}
-		int shift = 31 - firstOne;
-		IntFixed<P> shifted;
-		if (shift > 0) {
-			shifted = rshBits(shift);
-		} else if (shift < 0) {
-			shifted = lshBits(-shift);
-		} else {
-			shifted = clone();
-		}
+        IntFixed<P> shifted = lshBits(firstOne);
 		long bits = (sign ? 1l : 0l) << 63 |
-//                    (overflow ? 0x7FFL : (1023l + shift)) << 52 |
-                    (1023l + shift) << 52 |
-				    (shifted.parts[1] & 0xFFFFFFFFL) << 20 | (shifted.parts.length > 2 ? shifted.parts[2] & 0xFFFFF000L : 0) >> 12;
+                    (1023l - firstOne - 1 + 32l * precision.getIntegralSize()) << 52 |
+                    (shifted.parts[0] & 0x7FFFFFFFL) << 21 | (shifted.parts.length > 1 ? shifted.parts[1] & 0xFFFFF800L : 0) >> 11;
 		return Double.longBitsToDouble(bits);
     }
 
@@ -714,8 +653,8 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 //            }
 //        }
         for (int i = 0; i < size; i++) {
-            if (i == 1) result += '.';
-            result += Integer.toHexString(parts[i]);
+            if (i == precision.getIntegralSize()) result += '.';
+            result += String.format("%08x", parts[i]);
         }
         return result + (overflow ? " overflowed" : "");
     }
@@ -751,6 +690,11 @@ public final class IntFixed<P extends Precision> extends BigFixed<IntFixed<P>, P
 		}
         if (sign && o.sign) return -comp;
         return comp;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        return obj instanceof IntFixed<?> o && o.precision == precision && compareTo(o) == 0;
     }
     
     @Override

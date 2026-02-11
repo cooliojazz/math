@@ -6,8 +6,9 @@ import com.up.math.vector.Point2;
 public record AffineMatrix2(double a, double b, double c, double d, double x, double y) {
 
     public AffineMatrix2 compose(AffineMatrix2 m) {
-        return new AffineMatrix2(m.a * a + m.c * b, m.b * a + m.d * b, m.x * a + m.y * b + x,
-                           m.a * c + m.c * d, m.b * c + m.d * d, m.x * c + m.y * d + y);
+        return new AffineMatrix2(m.a * a + m.c * b, m.b * a + m.d * b,
+                                 m.a * c + m.c * d, m.b * c + m.d * d, 
+                                 m.x * a + m.y * b + x, m.x * c + m.y * d + y);
     }
     
     public Point2 apply(Point2 p) {

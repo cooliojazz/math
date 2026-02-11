@@ -2,11 +2,14 @@ package com.up.math.examples;
 
 import com.up.math.matrix.AffineMatrix2;
 import com.up.math.number.Complex;
+import com.up.math.number.IntFixed;
+import static com.up.math.number.Precision.*;
 import com.up.math.vector.Point2;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.BufferedImage;
+
 
 public class Main {
     
@@ -15,6 +18,23 @@ public class Main {
     // new Complex(2)
     
     public static void main(String[] args) {
+//        System.out.println(IntFixed.exp2(P2_1, 32).add(IntFixed.fromInt(P2_1, 2)));
+////        System.out.println(new IntFixed<>(P2_1).one().toDouble());
+//        IntFixed<P2_1> a = IntFixed.fromDouble(P2_1, 1.5);
+////        IntFixed<P1_1> a = IntFixed.fromDouble(P1_1, 123456789);
+////        IntFixed<P2_0> a = IntFixed.fromDouble(P2_0, 123456789.123);
+////        IntFixed<P2_1> b = IntFixed.fromDouble(P2_1, 2);
+//        IntFixed<P2_1> b = IntFixed.fromDouble(P2_1, 4.1);
+////        int i = a.toInt();
+////        double d = a.toDouble();
+////        System.out.println(a.add(b).toDouble());
+//        System.out.println(a.mult(b).toDouble());
+////        System.out.println(b.one().div(b.two()));
+//        System.out.println(b.log2());
+////        System.out.println(IntFixed.exp2(P2_0, 4));
+//        
+//        if (true) return;
+        
 //        char[][] out = new char[16][100];
 //        for (int i = 0; i < 16; i++) {
 //            for (int j = 0; j < 100; j++) {
@@ -42,7 +62,8 @@ public class Main {
             });
         f.setSize(1000, 800);
 //        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100)));
-        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100000)));
+//        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.3246703815274639, -0.32267018065624486), new Complex(2, 0), 100000)));
+        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-1.2574073898400625, -0.4093759554218459), new Complex(2, 0), 100000)));
 //        f.add(new StochasticFractalDrawer(new FractalParameters(1.4, new Point2(-0.08350828339576327, -0.0015708583190908029), new Complex(4, 2), 100)));
         f.setVisible(true);
     }
